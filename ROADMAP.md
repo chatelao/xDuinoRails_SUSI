@@ -7,7 +7,7 @@ This document outlines the development plan for the Arduino NMRA SUSI library.
 - [x] Create the `docs` directory and confirm all downloaded NMRA/RailCommunity specifications are present.
 - [x] Create a `README.md` file with a brief project overview.
 - [x] Create the main deliverable: `ROADMAP.md`. This file will contain the detailed checklists for the Master and Slave implementations.
-- [ ] Set up a basic Arduino library structure: create a `src` directory and a `library.properties` file.
+- [x] Set up a basic Arduino library structure: create a `src` directory and a `library.properties` file.
 
 ## 2. Master (Decoder) Role Implementation
 
