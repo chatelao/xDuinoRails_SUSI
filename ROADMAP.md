@@ -17,7 +17,7 @@ This document outlines the development plan for the Arduino NMRA SUSI library.
 - [ ] **[M4]** Write a low-level function to transmit a single SUSI packet bit-by-bit.
 - [ ] **[M5]** Implement helper functions to encode standard SUSI commands (e.g., Set Function, Set CV).
 - [ ] **[M6]** Create a high-level API for sending commands to a specific slave address.
-- [ ] **[M7]** Implement a low-level function to read data from the data line for bidirectional communication.
+- [x] **[M7]** Implement a low-level function to read data from the data line for bidirectional communication.
 - [ ] **[M8]** Create a mechanism to listen for and parse responses from slave modules.
 - [ ] **[M9]** Implement state management for the master (e.g., tracking last command, waiting for response).
 - [ ] **[M10]** Implement the specific command sequence for writing to a slave's Configuration Variable (CV).
