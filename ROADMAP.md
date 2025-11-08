@@ -6,13 +6,13 @@ This document outlines the development plan for the Arduino NMRA SUSI library.
 
 - [x] Create the `docs` directory and confirm all downloaded NMRA/RailCommunity specifications are present.
 - [x] Create a `README.md` file with a brief project overview.
-- [ ] Create the main deliverable: `ROADMAP.md`. This file will contain the detailed checklists for the Master and Slave implementations.
+- [x] Create the main deliverable: `ROADMAP.md`. This file will contain the detailed checklists for the Master and Slave implementations.
 - [ ] Set up a basic Arduino library structure: create a `src` directory and a `library.properties` file.
 
 ## 2. Master (Decoder) Role Implementation
 
-- [ ] **[M1]** Define a hardware abstraction layer (HAL) for pin control (Clock, Data).
-- [ ] **[M2]** Implement precise microsecond-level timing functions for the SUSI clock signal.
+- [x] **[M1]** Define a hardware abstraction layer (HAL) for pin control (Clock, Data).
+- [x] **[M2]** Implement precise microsecond-level timing functions for the SUSI clock signal.
 - [ ] **[M3]** Create data structures/classes to represent SUSI packets.
 - [ ] **[M4]** Write a low-level function to transmit a single SUSI packet bit-by-bit.
 - [ ] **[M5]** Implement helper functions to encode standard SUSI commands (e.g., Set Function, Set CV).
