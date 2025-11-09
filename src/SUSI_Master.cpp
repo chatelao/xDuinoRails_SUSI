@@ -5,6 +5,9 @@ const uint8_t SUSI_CMD_SET_FUNCTION = 0x01;
 const uint8_t SUSI_CMD_WRITE_CV = 0x02;
 const uint8_t SUSI_CMD_READ_CV = 0x03;
 
+// Timing constants from the SUSI specification (in microseconds)
+const unsigned long T_CLK_HALF = 50; // Half period of the clock signal
+
 // [M1] Hardware Abstraction Layer (HAL) for pin control
 SUSI_Master::SUSI_Master(uint8_t clockPin, uint8_t dataPin) : _hal(clockPin, dataPin) {
 }
@@ -18,9 +21,9 @@ void SUSI_Master::begin() {
 // [M2] Precise microsecond-level timing functions
 void SUSI_Master::clockPulse() {
     _hal.set_clock_low();
-    delay_us(SUSI_CLOCK_HALF_PERIOD_US);
+    delay_us(T_CLK_HALF);
     _hal.set_clock_high();
-    delay_us(SUSI_CLOCK_HALF_PERIOD_US);
+    delay_us(T_CLK_HALF);
 }
 
 void SUSI_Master::delay_us(unsigned long us) {
@@ -101,12 +104,12 @@ uint8_t SUSI_Master::readCV(uint8_t address, uint16_t cv) {
     for (int i = 0; i < 8; i++) {
         // The slave will present a bit on the data line, and we clock it in
         _hal.set_clock_low();
-        delay_us(SUSI_CLOCK_HALF_PERIOD_US);
+        delay_us(T_CLK_HALF);
         if (readData()) {
             value |= (1 << i);
         }
         _hal.set_clock_high();
-        delay_us(SUSI_CLOCK_HALF_PERIOD_US);
+        delay_us(T_CLK_HALF);
     }
 
     // A final clock pulse to signal the end of the read
