@@ -29,6 +29,7 @@ public:
 
 private:
     SusiHAL _hal;
+    static const int SUSI_CLOCK_HALF_PERIOD_US = 10;
 
     // [M2] Precise microsecond-level timing functions
     void clockPulse();
