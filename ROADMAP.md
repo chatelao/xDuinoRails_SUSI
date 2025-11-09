@@ -7,6 +7,7 @@ This document outlines the development plan for the Arduino NMRA SUSI library, s
 - [x] Create the `docs` directory and confirm all downloaded NMRA/RailCommunity specifications are present.
 - [x] Create a `README.md` file with a brief project overview.
 - [x] Create the main deliverable: `ROADMAP.md`.
+- [x] Integrate the SUSI data variables table into the RCN-600 documentation.
 - [ ] Set up a basic Arduino library structure: create a `src` directory and a `library.properties` file.
 
 ## 2. Core Protocol Implementation (RCN-600)
