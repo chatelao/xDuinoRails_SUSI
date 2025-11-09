@@ -8,3 +8,6 @@ Nach Abschluss jeder Aufgabe **muss** die `ROADMAP.md`-Datei aktualisiert werden
 
 ## Testing
 Für jede Funktion muss ein nativer Testfall sowie ein end-to-end Testfall geschrieben werden.
+
+## Continuous Integration
+Bei jedem Push auf einen beliebigen Branch muss das gesamte Modul mit GitHub Actions neu gebaut und getestet werden.
