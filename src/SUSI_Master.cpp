@@ -5,9 +5,6 @@ const uint8_t SUSI_CMD_SET_FUNCTION = 0x01;
 const uint8_t SUSI_CMD_WRITE_CV = 0x02;
 const uint8_t SUSI_CMD_READ_CV = 0x03;
 
-// Timing constants from the SUSI specification (in microseconds)
-const unsigned long T_CLK_HALF = 50; // Half period of the clock signal
-
 // [M1] Hardware Abstraction Layer (HAL) for pin control
 SUSI_Master::SUSI_Master(uint8_t clockPin, uint8_t dataPin) : _hal(clockPin, dataPin) {
 }
@@ -18,23 +15,11 @@ void SUSI_Master::begin() {
     _hal.set_data_high();  // Data idle is HIGH
 }
 
-// [M2] Precise microsecond-level timing functions
-void SUSI_Master::clockPulse() {
-    _hal.set_clock_low();
-    delay_us(T_CLK_HALF);
-    _hal.set_clock_high();
-    delay_us(T_CLK_HALF);
-}
-
-void SUSI_Master::delay_us(unsigned long us) {
-    delayMicroseconds(us);
-}
-
 // [M4] Low-level function to transmit a single SUSI packet
 void SUSI_Master::sendPacket(const SUSI_Packet& packet) {
     // Start bit
     _hal.set_data_low();
-    clockPulse();
+    _hal.generate_clock_pulse();
 
     // Send the 3 bytes of the packet
     sendByte(packet.address);
@@ -43,7 +28,7 @@ void SUSI_Master::sendPacket(const SUSI_Packet& packet) {
 
     // Stop bit
     _hal.set_data_high();
-    clockPulse();
+    _hal.generate_clock_pulse();
 }
 
 void SUSI_Master::sendByte(uint8_t byte) {
@@ -53,7 +38,7 @@ void SUSI_Master::sendByte(uint8_t byte) {
         } else {
             _hal.set_data_low();
         }
-        clockPulse();
+        _hal.generate_clock_pulse();
     }
 }
 
@@ -102,18 +87,13 @@ uint8_t SUSI_Master::readCV(uint8_t address, uint16_t cv) {
     // After sending the request, we need to read the 8 bits of the CV value
     uint8_t value = 0;
     for (int i = 0; i < 8; i++) {
-        // The slave will present a bit on the data line, and we clock it in
-        _hal.set_clock_low();
-        delay_us(T_CLK_HALF);
-        if (readData()) {
+        if (_hal.read_bit()) {
             value |= (1 << i);
         }
-        _hal.set_clock_high();
-        delay_us(T_CLK_HALF);
     }
 
     // A final clock pulse to signal the end of the read
-    clockPulse();
+    _hal.generate_clock_pulse();
 
     return value;
 }

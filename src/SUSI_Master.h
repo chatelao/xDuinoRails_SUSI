@@ -31,9 +31,6 @@ private:
     SusiHAL _hal;
 
     // [M2] Precise microsecond-level timing functions
-    void clockPulse();
-    void delay_us(unsigned long us);
-
     void sendByte(uint8_t byte);
     bool readData();
 };

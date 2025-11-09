@@ -18,6 +18,13 @@ void SusiHAL::set_clock_low() {
     digitalWrite(_clock_pin, LOW);
 }
 
+void SusiHAL::generate_clock_pulse() {
+    set_clock_low();
+    delayMicroseconds(10);
+    set_clock_high();
+    delayMicroseconds(10);
+}
+
 void SusiHAL::set_data_high() {
     digitalWrite(_data_pin, HIGH);
 }
@@ -30,5 +37,14 @@ bool SusiHAL::read_data() {
     pinMode(_data_pin, INPUT);
     bool value = digitalRead(_data_pin);
     pinMode(_data_pin, OUTPUT);
+    return value;
+}
+
+bool SusiHAL::read_bit() {
+    set_clock_low();
+    delayMicroseconds(10);
+    bool value = read_data();
+    set_clock_high();
+    delayMicroseconds(10);
     return value;
 }

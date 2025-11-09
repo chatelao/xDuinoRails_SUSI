@@ -9,9 +9,11 @@ public:
     void begin();
     void set_clock_high();
     void set_clock_low();
+    void generate_clock_pulse();
     void set_data_high();
     void set_data_low();
     bool read_data();
+    bool read_bit();
 
 private:
     uint8_t _clock_pin;
