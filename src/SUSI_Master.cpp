@@ -23,7 +23,7 @@ void SUSI_Master::begin() {
 }
 
 // [M4] Low-level function to transmit a single SUSI packet
-void SUSI_Master::sendPacket(const SUSI_Packet& packet) {
+bool SUSI_Master::sendPacket(const SUSI_Packet& packet, bool expectAck) {
     // [RCN600-M2] Implement timing and synchronization logic
     unsigned long current_time_ms = millis();
     if (current_time_ms - _last_packet_time_ms > SUSI_INTER_BYTE_TIMEOUT_MS) {
@@ -50,6 +50,12 @@ void SUSI_Master::sendPacket(const SUSI_Packet& packet) {
 
     _last_packet_time_ms = millis();
     _packets_since_sync++;
+
+    if (expectAck) {
+        return _hal.waitForAck();
+    }
+
+    return true;
 }
 
 void SUSI_Master::sendByte(uint8_t byte) {
@@ -64,27 +70,29 @@ void SUSI_Master::sendByte(uint8_t byte) {
 }
 
 // [M5] Helper functions to encode standard SUSI commands
-void SUSI_Master::setFunction(uint8_t address, uint8_t function, bool on) {
+bool SUSI_Master::setFunction(uint8_t address, uint8_t function, bool on) {
     SUSI_Packet packet;
     packet.address = address;
     packet.command = SUSI_CMD_SET_FUNCTION;
     packet.data = (function & 0x1F) | (on ? 0x80 : 0x00);
-    sendPacket(packet);
+    return sendPacket(packet, true);
 }
 
-void SUSI_Master::writeCV(uint8_t address, uint16_t cv, uint8_t value) {
+bool SUSI_Master::writeCV(uint8_t address, uint16_t cv, uint8_t value) {
     // SUSI requires two packets to write a CV
     SUSI_Packet packet1;
     packet1.address = address;
     packet1.command = SUSI_CMD_WRITE_CV;
     packet1.data = (cv >> 8) & 0x03; // High 2 bits of CV
-    sendPacket(packet1);
+    if (!sendPacket(packet1, true)) {
+        return false;
+    }
 
     SUSI_Packet packet2;
     packet2.address = address;
     packet2.command = cv & 0xFF; // Low 8 bits of CV
     packet2.data = value;
-    sendPacket(packet2);
+    return sendPacket(packet2, true);
 }
 
 bool SUSI_Master::readData() {

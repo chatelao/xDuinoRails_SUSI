@@ -48,3 +48,32 @@ bool SusiHAL::read_bit() {
     delayMicroseconds(10);
     return value;
 }
+
+bool SusiHAL::waitForAck() {
+    unsigned long start_time = millis();
+
+    // Wait for the data line to go LOW (start of ACK)
+    while (read_data()) {
+        if (millis() - start_time > 20) {
+            return false; // Timeout
+        }
+    }
+
+    unsigned long pulse_start_time = micros();
+
+    // Wait for the data line to go HIGH again (end of ACK)
+    while (!read_data()) {
+        if (millis() - start_time > 20) {
+            return false; // Timeout
+        }
+    }
+
+    unsigned long pulse_duration = micros() - pulse_start_time;
+
+    // Check if the pulse duration is within the valid range (0.5ms to 7ms)
+    if (pulse_duration >= 500 && pulse_duration <= 7000) {
+        return true;
+    }
+
+    return false;
+}

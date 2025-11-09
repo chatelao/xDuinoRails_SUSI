@@ -14,6 +14,7 @@ public:
     void set_data_low();
     bool read_data();
     bool read_bit();
+    bool waitForAck();
 
 private:
     uint8_t _clock_pin;
