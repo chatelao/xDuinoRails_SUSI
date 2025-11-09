@@ -29,6 +29,8 @@ public:
 
 private:
     SusiHAL _hal;
+    unsigned long _last_packet_time_ms;
+    uint8_t _packets_since_sync;
 
     // [M2] Precise microsecond-level timing functions
     void sendByte(uint8_t byte);

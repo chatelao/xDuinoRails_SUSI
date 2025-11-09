@@ -15,10 +15,10 @@ This document outlines the development plan for the Arduino NMRA SUSI library, s
 
 - [x] **[M1]** Define a hardware abstraction layer (HAL) for pin control (Clock, Data).
 - [x] **[RCN600-M1]** Implement precise microsecond-level timing for the SUSI clock signal (≥10µs high/low, ≤500µs total period).
-- [ ] **[RCN600-M2]** Implement timing and synchronization logic:
-    - [ ] Ensure bytes of a multi-byte command are sent within 7ms of each other.
-    - [ ] Ensure a pause of at least 9ms before a new command if the previous one ended more than 7ms ago.
-    - [ ] Insert a synchronization gap of at least 9ms after every 20 commands.
+- [x] **[RCN600-M2]** Implement timing and synchronization logic:
+    - [x] Ensure bytes of a multi-byte command are sent within 7ms of each other.
+    - [x] Ensure a pause of at least 9ms before a new command if the previous one ended more than 7ms ago.
+    - [x] Insert a synchronization gap of at least 9ms after every 20 commands.
 - [ ] **[RCN600-M3]** Implement Acknowledge (ACK) handling:
     - [ ] For commands requiring a response, listen for an ACK pulse.
     - [ ] Correctly handle ACK timing (accept pulses from 0.5ms to 7ms).

@@ -5,8 +5,15 @@ const uint8_t SUSI_CMD_SET_FUNCTION = 0x01;
 const uint8_t SUSI_CMD_WRITE_CV = 0x02;
 const uint8_t SUSI_CMD_READ_CV = 0x03;
 
+// Timing constants from the SUSI specification
+const unsigned long SUSI_INTER_BYTE_TIMEOUT_MS = 7;
+const unsigned long SUSI_SYNC_GAP_MS = 9;
+const uint8_t SUSI_PACKETS_PER_SYNC = 20;
+
 // [M1] Hardware Abstraction Layer (HAL) for pin control
 SUSI_Master::SUSI_Master(uint8_t clockPin, uint8_t dataPin) : _hal(clockPin, dataPin) {
+    _last_packet_time_ms = 0;
+    _packets_since_sync = 0;
 }
 
 void SUSI_Master::begin() {
@@ -17,6 +24,17 @@ void SUSI_Master::begin() {
 
 // [M4] Low-level function to transmit a single SUSI packet
 void SUSI_Master::sendPacket(const SUSI_Packet& packet) {
+    // [RCN600-M2] Implement timing and synchronization logic
+    unsigned long current_time_ms = millis();
+    if (current_time_ms - _last_packet_time_ms > SUSI_INTER_BYTE_TIMEOUT_MS) {
+        delay(SUSI_SYNC_GAP_MS);
+    }
+
+    if (_packets_since_sync >= SUSI_PACKETS_PER_SYNC) {
+        delay(SUSI_SYNC_GAP_MS);
+        _packets_since_sync = 0;
+    }
+
     // Start bit
     _hal.set_data_low();
     _hal.generate_clock_pulse();
@@ -29,6 +47,9 @@ void SUSI_Master::sendPacket(const SUSI_Packet& packet) {
     // Stop bit
     _hal.set_data_high();
     _hal.generate_clock_pulse();
+
+    _last_packet_time_ms = millis();
+    _packets_since_sync++;
 }
 
 void SUSI_Master::sendByte(uint8_t byte) {
