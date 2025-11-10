@@ -2,17 +2,14 @@
 #define SUSI_SLAVE_H
 
 #include <Arduino.h>
-
-// Re-defining SUSI_Packet here for the slave.
-// In a real library, this would be in a shared header.
-struct SUSI_Packet {
-    uint8_t address;
-    uint8_t command;
-    uint8_t data;
-};
+#include "SUSI_Packet.h"
 
 class SUSI_Slave {
 public:
+    friend void SUSI_Slave_ISR();
+    friend class EndToEndTest; // Grant access to the test fixture
+    friend class SUSISlaveTest; // Grant access to the unit test fixture
+
     // [S1] HAL for the slave's clock and data pins.
     SUSI_Slave(uint8_t clockPin, uint8_t dataPin, uint8_t address);
 
@@ -33,6 +30,13 @@ private:
     volatile uint8_t _bitCount;
     volatile uint32_t _dataBuffer;
     volatile bool _packetReady;
+
+#ifdef TESTING
+public:
+    SUSI_Packet _last_received_packet;
+    bool getPacketReady() const { return _packetReady; }
+    uint32_t getDataBuffer() const { return _dataBuffer; }
+#endif
 };
 
 #endif // SUSI_SLAVE_H

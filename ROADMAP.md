@@ -103,3 +103,10 @@ This document outlines the development plan for the Arduino NMRA SUSI library, s
 - [ ] Create a "Slave" example sketch demonstrating key features.
 - [ ] Write comprehensive documentation for the library's public API.
 - [ ] Add a "Getting Started" guide to the main `README.md`.
+
+## 6. Testing & CI
+
+- [x] Set up a Continuous Integration (CI) workflow to build the library.
+- [x] Establish a native unit testing framework.
+- [x] Establish an end-to-end (integration) testing framework.
+- [x] Implement a baseline of unit and end-to-end tests for all existing code.

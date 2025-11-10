@@ -1,5 +1,9 @@
 #include "SUSI_Slave.h"
 
+#ifndef IRAM_ATTR
+#define IRAM_ATTR
+#endif
+
 // [S2] Interrupt-driven routine - static instance and ISR
 SUSI_Slave* SUSI_Slave::instance = nullptr;
 
@@ -61,6 +65,9 @@ void SUSI_Slave::loop() {
 
         // [S6] Check if the packet's address matches
         if (packet.address == _address) {
+#ifdef TESTING
+            _last_received_packet = packet;
+#endif
             // [S7] Packet is valid and for us, process it.
             // For now, just print it to serial.
             Serial.print("Received SUSI Packet: ");

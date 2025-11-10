@@ -3,13 +3,7 @@
 
 #include <Arduino.h>
 #include "susi_hal.h"
-
-// [M3] Data structure to represent a SUSI packet
-struct SUSI_Packet {
-    uint8_t address;
-    uint8_t command;
-    uint8_t data;
-};
+#include "SUSI_Packet.h"
 
 class SUSI_Master {
 public:
