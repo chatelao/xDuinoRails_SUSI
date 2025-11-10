@@ -195,3 +195,92 @@ TEST_F(SUSISlaveTest, SetSpeedPacketReception) {
     EXPECT_EQ(received_packet.command, SUSI_CMD_SET_SPEED);
     EXPECT_EQ(received_packet.data, (100 & 0x7F) | 0x80);
 }
+
+TEST_F(SUSISlaveTest, PacketTimeout) {
+    // Simulate the start of a packet
+    digitalWrite(DATA_PIN, LOW);
+    digitalWrite(CLOCK_PIN, LOW);
+    digitalWrite(CLOCK_PIN, HIGH);
+
+    // Simulate sending a few bits
+    for (int i = 0; i < 5; ++i) {
+        digitalWrite(DATA_PIN, HIGH);
+        digitalWrite(CLOCK_PIN, LOW);
+        digitalWrite(CLOCK_PIN, HIGH);
+    }
+
+    // Advance time by 9ms to trigger the timeout
+    mock_hal_advance_time(9);
+
+    // Send another clock pulse to trigger the timeout check
+    digitalWrite(CLOCK_PIN, LOW);
+    digitalWrite(CLOCK_PIN, HIGH);
+
+    // Now, send a complete, valid packet
+    digitalWrite(DATA_PIN, LOW); // Start bit
+    digitalWrite(CLOCK_PIN, LOW);
+    digitalWrite(CLOCK_PIN, HIGH);
+
+    uint8_t packet_bytes[3] = {SLAVE_ADDRESS, SUSI_CMD_SET_SPEED, 0x01};
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 8; ++j) {
+            digitalWrite(DATA_PIN, (packet_bytes[i] >> j) & 0x01);
+            digitalWrite(CLOCK_PIN, LOW);
+            digitalWrite(CLOCK_PIN, HIGH);
+        }
+    }
+
+    digitalWrite(DATA_PIN, HIGH); // Stop bit
+    digitalWrite(CLOCK_PIN, LOW);
+    digitalWrite(CLOCK_PIN, HIGH);
+
+    // The slave should have received the second packet correctly
+    EXPECT_TRUE(slave.available());
+    SUSI_Packet received_packet = slave.read();
+    EXPECT_EQ(received_packet.data, 0x01);
+}
+
+TEST_F(SUSISlaveTest, InvalidStopBit) {
+    // Send a packet with a LOW stop bit (invalid)
+    digitalWrite(DATA_PIN, LOW); // Start bit
+    digitalWrite(CLOCK_PIN, LOW);
+    digitalWrite(CLOCK_PIN, HIGH);
+
+    uint8_t packet_bytes[3] = {SLAVE_ADDRESS, 0x01, 0x02};
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 8; ++j) {
+            digitalWrite(DATA_PIN, (packet_bytes[i] >> j) & 0x01);
+            digitalWrite(CLOCK_PIN, LOW);
+            digitalWrite(CLOCK_PIN, HIGH);
+        }
+    }
+
+    digitalWrite(DATA_PIN, LOW); // Invalid stop bit
+    digitalWrite(CLOCK_PIN, LOW);
+    digitalWrite(CLOCK_PIN, HIGH);
+
+    // The slave should not have a packet available
+    EXPECT_FALSE(slave.available());
+
+    // Now send a valid packet
+    digitalWrite(DATA_PIN, LOW); // Start bit
+    digitalWrite(CLOCK_PIN, LOW);
+    digitalWrite(CLOCK_PIN, HIGH);
+
+    uint8_t packet_bytes2[3] = {SLAVE_ADDRESS, 0x03, 0x04};
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 8; ++j) {
+            digitalWrite(DATA_PIN, (packet_bytes2[i] >> j) & 0x01);
+            digitalWrite(CLOCK_PIN, LOW);
+            digitalWrite(CLOCK_PIN, HIGH);
+        }
+    }
+
+    digitalWrite(DATA_PIN, HIGH); // Valid stop bit
+    digitalWrite(CLOCK_PIN, LOW);
+    digitalWrite(CLOCK_PIN, HIGH);
+
+    EXPECT_TRUE(slave.available());
+    SUSI_Packet received_packet = slave.read();
+    EXPECT_EQ(received_packet.command, 0x03);
+}

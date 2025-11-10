@@ -25,6 +25,7 @@ private:
     volatile bool _packetReady;
     volatile uint8_t _buffer[3];
     volatile uint8_t _bitCount;
+    volatile unsigned long _last_bit_time_us;
     uint8_t _speed;
     bool _forward;
 };

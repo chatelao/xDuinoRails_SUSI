@@ -13,6 +13,14 @@ unsigned long ack_pulse_start_time = 0;
 unsigned long ack_pulse_duration = 0;
 std::vector<int> digitalRead_return_sequence;
 
+void noInterrupts() {
+    // Not implemented for mock
+}
+
+void interrupts() {
+    // Not implemented for mock
+}
+
 void pinMode(uint8_t pin, uint8_t mode) {
     pin_modes[pin] = mode;
 }
