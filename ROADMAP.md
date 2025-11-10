@@ -2,6 +2,12 @@
 
 This document outlines the development plan for the Arduino NMRA SUSI library, structured according to the official RailCommunity specifications.
 
+## Development Principles
+
+To ensure a robust and testable library, the following principles should be followed:
+
+- **Parallel Development:** For every feature implemented in the `SUSI_Master`, the corresponding functionality in the `SUSI_Slave` must be implemented concurrently. This allows for immediate end-to-end testing and ensures that the two modules remain synchronized.
+
 ## 1. Project Setup & Documentation
 
 - [x] Create the `docs` directory and confirm all downloaded NMRA/RailCommunity specifications are present.
@@ -23,19 +29,19 @@ This document outlines the development plan for the Arduino NMRA SUSI library, s
     - [x] For commands requiring a response, listen for an ACK pulse.
     - [x] Correctly handle ACK timing (accept pulses from 0.5ms to 7ms).
     - [x] Implement a 20ms timeout for aborting a command if no ACK is received.
-- [ ] **[M3]** Create data structures/classes to represent SUSI packets.
-- [ ] **[M4]** Write a low-level function to transmit a single SUSI packet bit-by-bit.
-- [ ] **[RCN600-M4]** Implement helper functions to encode and send standard SUSI commands as defined in RCN-600.
+- [x] **[M3]** Create data structures/classes to represent SUSI packets.
+- [x] **[M4]** Write a low-level function to transmit a single SUSI packet bit-by-bit.
+- [x] **[RCN600-M4]** Implement helper functions to encode and send standard SUSI commands as defined in RCN-600.
 - [ ] **[M6]** Create a high-level API for sending commands to a specific slave address.
 - [ ] **[M9]** Implement state management for the master (e.g., tracking last command, waiting for response).
 - [ ] **[M14]** Add error handling for timeouts or invalid responses from a slave.
 
 ### Slave (Module) Role
 
-- [ ] **[S1]** Define a HAL for the slave's clock and data pins.
-- [ ] **[S2]** Implement an interrupt-driven routine to detect the falling edge of the SUSI clock.
-- [ ] **[S3]** Inside the interrupt, read the data bit from the data line.
-- [ ] **[S4]** Assemble the incoming bits into a complete SUSI packet in a buffer.
+- [x] **[S1]** Define a HAL for the slave's clock and data pins.
+- [x] **[S2]** Implement an interrupt-driven routine to detect the falling edge of the SUSI clock.
+- [x] **[S3]** Inside the interrupt, read the data bit from the data line.
+- [x] **[S4]** Assemble the incoming bits into a complete SUSI packet in a buffer.
 - [ ] **[S5]** Validate the received packet (e.g., start/stop bits).
 - [ ] **[RCN600-S1]** Implement protocol timing and synchronization logic:
     - [ ] Implement an 8ms timeout to reset the packet buffer if a byte is incomplete, preventing synchronization loss.
