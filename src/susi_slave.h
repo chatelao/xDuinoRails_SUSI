@@ -2,9 +2,10 @@
 #define SUSI_SLAVE_H
 
 #include <Arduino.h>
-#include <map>
 #include "susi_hal.h"
 #include "susi_packet.h"
+
+const uint8_t MAX_CVS = 32;
 
 class SUSI_Slave {
 public:
@@ -17,7 +18,7 @@ public:
     uint8_t getSpeed() const { return _speed; }
     bool getDirection() const { return _forward; }
     bool getFunction(uint8_t function) const { return (_functions >> function) & 1; }
-    uint8_t readCV(uint16_t cv) { return _cvs[cv - 1]; }
+    uint8_t readCV(uint16_t cv);
 
 private:
     static void onClockFall();
@@ -32,8 +33,10 @@ private:
     uint8_t _speed;
     bool _forward;
     uint32_t _functions;
-    std::map<uint16_t, uint8_t> _cvs;
     uint8_t _cv_bank;
+    uint16_t _cv_keys[MAX_CVS];
+    uint8_t _cv_values[MAX_CVS];
+    uint8_t _cv_count;
 };
 
 #endif // SUSI_SLAVE_H

@@ -15,6 +15,7 @@ SUSI_Slave::SUSI_Slave(uint8_t clockPin, uint8_t dataPin) : _hal(clockPin, dataP
     _forward = false;
     _functions = 0;
     _cv_bank = 0;
+    _cv_count = 0;
 }
 
 void SUSI_Slave::begin(uint8_t address) {
@@ -69,12 +70,32 @@ SUSI_Packet SUSI_Slave::read() {
             default:
                 if (_cv_bank != 0) {
                     uint16_t cv = ((_cv_bank - 1) << 8) | packet.command;
-                    _cvs[cv] = packet.data;
+                    for (int i = 0; i < _cv_count; i++) {
+                        if (_cv_keys[i] == cv) {
+                            _cv_values[i] = packet.data;
+                            _cv_bank = 0;
+                            return packet;
+                        }
+                    }
+                    if (_cv_count < MAX_CVS) {
+                        _cv_keys[_cv_count] = cv;
+                        _cv_values[_cv_count] = packet.data;
+                        _cv_count++;
+                    }
                     _cv_bank = 0;
                 }
         }
     }
     return packet;
+}
+
+uint8_t SUSI_Slave::readCV(uint16_t cv) {
+    for (int i = 0; i < _cv_count; i++) {
+        if (_cv_keys[i] == cv - 1) {
+            return _cv_values[i];
+        }
+    }
+    return 0;
 }
 
 void SUSI_Slave::onClockFall() {
