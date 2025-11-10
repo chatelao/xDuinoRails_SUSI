@@ -1,4 +1,4 @@
-#include "SUSI_Slave.h"
+#include "susi_slave.h"
 #include "susi_commands.h"
 
 static SUSI_Slave*_susi_slave_instance = nullptr;

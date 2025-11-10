@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 #include "susi_hal.h"
-#include "SUSI_Packet.h"
+#include "susi_packet.h"
 
 class SUSI_Slave {
 public:

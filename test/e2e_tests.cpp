@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
-#include "SUSI_Master.h"
-#include "SUSI_Slave.h"
+#include "susi_master.h"
+#include "susi_slave.h"
 #include "mock_hal.h"
 #include "susi_commands.h"
 

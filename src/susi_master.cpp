@@ -1,4 +1,4 @@
-#include "SUSI_Master.h"
+#include "susi_master.h"
 #include "susi_commands.h"
 
 // Timing constants from the SUSI specification

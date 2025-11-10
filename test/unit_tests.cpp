@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
 #include "susi_hal.h"
 #include "mock_hal.h"
-#include "SUSI_Master.h"
-#include "SUSI_Slave.h"
+#include "susi_master.h"
+#include "susi_slave.h"
 #include "susi_commands.h"
 #include <vector>
 
