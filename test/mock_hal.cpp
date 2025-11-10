@@ -8,6 +8,10 @@ std::map<uint8_t, uint8_t> pin_states;
 std::vector<Call> digitalWrite_calls;
 std::map<uint8_t, ISR> isr_map;
 std::map<uint8_t, int> isr_mode_map;
+unsigned long mock_micros_time = 0;
+unsigned long ack_pulse_start_time = 0;
+unsigned long ack_pulse_duration = 0;
+std::vector<int> digitalRead_return_sequence;
 
 void pinMode(uint8_t pin, uint8_t mode) {
     pin_modes[pin] = mode;
@@ -28,12 +32,27 @@ void digitalWrite(uint8_t pin, uint8_t val) {
 }
 
 int digitalRead(uint8_t pin) {
-    return pin_states.count(pin) ? pin_states[pin] : LOW;
+    if (!digitalRead_return_sequence.empty()) {
+        int val = digitalRead_return_sequence.front();
+        digitalRead_return_sequence.erase(digitalRead_return_sequence.begin());
+        return val;
+    }
+
+    // Simulate the passage of time for polling loops
+    mock_micros_time += 10; // Advance time by 10us on each read
+
+    // Simulate an ACK pulse
+    if (pin == 3 && ack_pulse_duration > 0) {
+        if (mock_micros_time >= ack_pulse_start_time &&
+            mock_micros_time < ack_pulse_start_time + ack_pulse_duration) {
+            return LOW;
+        }
+    }
+    return pin_states.count(pin) ? pin_states[pin] : HIGH; // Default to HIGH for ACK test
 }
 
 void delayMicroseconds(unsigned int us) {
-    // In a real testing scenario, this could be a no-op,
-    // or it could interact with a time-mocking library.
+    mock_micros_time += us;
 }
 
 void delay(unsigned long ms) {
@@ -41,13 +60,11 @@ void delay(unsigned long ms) {
 }
 
 unsigned long millis() {
-    // Return a fixed value for now
-    return 1000;
+    return mock_micros_time / 1000;
 }
 
 unsigned long micros() {
-    // Return a fixed value for now
-    return 1000000;
+    return mock_micros_time;
 }
 
 uint8_t digitalPinToInterrupt(uint8_t pin) {
@@ -84,4 +101,12 @@ void mock_hal_reset() {
     digitalWrite_calls.clear();
     isr_map.clear();
     isr_mode_map.clear();
+    mock_micros_time = 0;
+    ack_pulse_start_time = 0;
+    ack_pulse_duration = 0;
+    digitalRead_return_sequence.clear();
+}
+
+void mock_hal_advance_time(unsigned long ms) {
+    mock_micros_time += ms * 1000;
 }

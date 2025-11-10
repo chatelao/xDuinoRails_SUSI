@@ -105,13 +105,17 @@ uint8_t SUSI_Master::readCV(uint8_t address, uint16_t cv) {
     packet1.address = address;
     packet1.command = SUSI_CMD_READ_CV;
     packet1.data = (cv >> 8) & 0x03; // High 2 bits of CV
-    sendPacket(packet1);
+    if (!sendPacket(packet1, true)) {
+        return 0; // Return 0 on error
+    }
 
     SUSI_Packet packet2;
     packet2.address = address;
     packet2.command = cv & 0xFF; // Low 8 bits of CV
     packet2.data = 0; // Data is ignored for read requests
-    sendPacket(packet2);
+    if (!sendPacket(packet2, true)) {
+        return 0; // Return 0 on error
+    }
 
     // After sending the request, we need to read the 8 bits of the CV value
     uint8_t value = 0;

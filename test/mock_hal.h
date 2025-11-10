@@ -65,6 +65,15 @@ extern std::map<uint8_t, ISR> isr_map;
 extern std::map<uint8_t, int> isr_mode_map;
 
 void mock_hal_reset();
+void mock_hal_advance_time(unsigned long ms);
+
+// --- Time mocking ---
+extern unsigned long mock_micros_time;
+extern unsigned long ack_pulse_start_time;
+extern unsigned long ack_pulse_duration;
+
+// --- Value sequencing ---
+extern std::vector<int> digitalRead_return_sequence;
 
 
 #endif // MOCK_HAL_H

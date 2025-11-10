@@ -10,6 +10,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      ARDUINO_LIBRARY_ENABLE_UNSAFE_INSTALL: true
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
