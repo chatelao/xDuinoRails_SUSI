@@ -4,8 +4,8 @@
 const uint8_t CLOCK_PIN = 2;
 const uint8_t DATA_PIN = 3;
 
-// Create a SUSI_Master instance
-SUSI_Master susi(CLOCK_PIN, DATA_PIN);
+// Create a SUSI_Master_API instance
+SUSI_Master_API susi(CLOCK_PIN, DATA_PIN);
 
 void setup() {
   Serial.begin(9600);
