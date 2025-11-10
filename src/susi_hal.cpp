@@ -85,3 +85,14 @@ void SusiHAL::sendAckPulse() {
     digitalWrite(_data_pin, HIGH);
     pinMode(_data_pin, INPUT);
 }
+
+void SusiHAL::sendByte(uint8_t byte) {
+    for (int i = 0; i < 8; i++) {
+        if ((byte >> i) & 0x01) {
+            set_data_high();
+        } else {
+            set_data_low();
+        }
+        generate_clock_pulse();
+    }
+}

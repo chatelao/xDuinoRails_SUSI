@@ -16,6 +16,8 @@ SUSI_Slave::SUSI_Slave(uint8_t clockPin, uint8_t dataPin) : _hal(clockPin, dataP
     _functions = 0;
     _cv_bank = 0;
     _cv_count = 0;
+    _cv_address = 0;
+    _cv_read_mode = false;
 }
 
 void SUSI_Slave::begin(uint8_t address) {
@@ -61,26 +63,32 @@ SUSI_Packet SUSI_Slave::read() {
                 break;
             case SUSI_CMD_WRITE_CV:
                 _cv_bank = packet.data + 1;
+                _cv_read_mode = false;
                 _hal.sendAckPulse();
                 break;
             case SUSI_CMD_READ_CV:
                 _cv_bank = packet.data + 1;
+                _cv_read_mode = true;
                 _hal.sendAckPulse();
                 break;
             default:
                 if (_cv_bank != 0) {
-                    uint16_t cv = ((_cv_bank - 1) << 8) | packet.command;
-                    for (int i = 0; i < _cv_count; i++) {
-                        if (_cv_keys[i] == cv) {
-                            _cv_values[i] = packet.data;
-                            _cv_bank = 0;
-                            return packet;
+                    _cv_address = ((_cv_bank - 1) << 8) | packet.command;
+                    if (_cv_read_mode) {
+                        _hal.sendByte(readCV(_cv_address + 1));
+                    } else {
+                        for (int i = 0; i < _cv_count; i++) {
+                            if (_cv_keys[i] == _cv_address) {
+                                _cv_values[i] = packet.data;
+                                _cv_bank = 0;
+                                return packet;
+                            }
                         }
-                    }
-                    if (_cv_count < MAX_CVS) {
-                        _cv_keys[_cv_count] = cv;
-                        _cv_values[_cv_count] = packet.data;
-                        _cv_count++;
+                        if (_cv_count < MAX_CVS) {
+                            _cv_keys[_cv_count] = _cv_address;
+                            _cv_values[_cv_count] = packet.data;
+                            _cv_count++;
+                        }
                     }
                     _cv_bank = 0;
                 }

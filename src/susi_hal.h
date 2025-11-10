@@ -17,6 +17,7 @@ public:
     virtual bool read_bit();
     virtual bool waitForAck();
     virtual void sendAckPulse();
+    virtual void sendByte(uint8_t byte);
 
     uint8_t get_clock_pin() const { return _clock_pin; }
 

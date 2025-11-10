@@ -34,6 +34,8 @@ private:
     bool _forward;
     uint32_t _functions;
     uint8_t _cv_bank;
+    uint16_t _cv_address;
+    bool _cv_read_mode;
     uint16_t _cv_keys[MAX_CVS];
     uint8_t _cv_values[MAX_CVS];
     uint8_t _cv_count;

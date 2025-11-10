@@ -103,7 +103,7 @@ TEST_F(SusiE2ETest, readCV) {
                 EXPECT_EQ(received_packet.address, SLAVE_ADDRESS);
                 EXPECT_EQ(received_packet.command, 0); // CV 1 is 0 in bank 0
                 EXPECT_EQ(received_packet.data, 0);
-                // TODO: Add assertion for CV value
+                EXPECT_EQ(hal.last_sent_byte, 0);
                 break;
             }
         }

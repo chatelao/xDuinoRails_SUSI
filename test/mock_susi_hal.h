@@ -11,7 +11,9 @@ public:
 
     std::function<bool(const SUSI_Packet&, bool)> onSendPacket;
     std::function<void()> afterSendPacket;
+    uint8_t last_sent_byte;
 
+    void sendByte(uint8_t byte) override { last_sent_byte = byte; }
     void begin() override {}
     void set_clock_high() override {}
     void set_clock_low() override {}
