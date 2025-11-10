@@ -42,9 +42,9 @@ To ensure a robust and testable library, the following principles should be foll
 - [x] **[S2]** Implement an interrupt-driven routine to detect the falling edge of the SUSI clock.
 - [x] **[S3]** Inside the interrupt, read the data bit from the data line.
 - [x] **[S4]** Assemble the incoming bits into a complete SUSI packet in a buffer.
-- [ ] **[S5]** Validate the received packet (e.g., start/stop bits).
-- [ ] **[RCN600-S1]** Implement protocol timing and synchronization logic:
-    - [ ] Implement an 8ms timeout to reset the packet buffer if a byte is incomplete, preventing synchronization loss.
+- [x] **[S5]** Validate the received packet (e.g., start/stop bits).
+- [x] **[RCN600-S1]** Implement protocol timing and synchronization logic:
+    - [x] Implement an 8ms timeout to reset the packet buffer if a byte is incomplete, preventing synchronization loss.
 - [ ] **[RCN600-S2]** Implement Acknowledge (ACK) generation:
     - [ ] For commands requiring a response, generate a 1-2ms ACK pulse on the data line.
 - [ ] **[S6]** Check if the packet's address matches the slave's configured address.

@@ -21,6 +21,8 @@ using uint32_t = std::uint32_t;
 #define IRAM_ATTR
 
 // Mock Arduino functions
+void noInterrupts();
+void interrupts();
 void pinMode(uint8_t pin, uint8_t mode);
 void digitalWrite(uint8_t pin, uint8_t val);
 int digitalRead(uint8_t pin);
