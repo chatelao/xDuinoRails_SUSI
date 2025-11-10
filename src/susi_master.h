@@ -7,29 +7,31 @@
 
 class SUSI_Master {
 public:
-    // [M1] Hardware Abstraction Layer (HAL) for pin control
     SUSI_Master(uint8_t clockPin, uint8_t dataPin);
-
     void begin();
-
-    // [M5] Helper functions to encode standard SUSI commands
-    bool setFunction(uint8_t address, uint8_t function, bool on);
-    bool setSpeed(uint8_t address, uint8_t speed, bool forward);
-    bool writeCV(uint8_t address, uint16_t cv, uint8_t value);
-    uint8_t readCV(uint8_t address, uint16_t cv);
-
-    // [M4] Low-level function to transmit a single SUSI packet
     bool sendPacket(const SUSI_Packet& packet, bool expectAck = false);
-
+    uint8_t readByteAfterRequest();
 
 private:
     SusiHAL _hal;
     unsigned long _last_packet_time_ms;
     uint8_t _packets_since_sync;
 
-    // [M2] Precise microsecond-level timing functions
     void sendByte(uint8_t byte);
-    bool readData();
+};
+
+class SUSI_Master_API {
+public:
+    SUSI_Master_API(uint8_t clockPin, uint8_t dataPin);
+    void begin();
+
+    bool setFunction(uint8_t address, uint8_t function, bool on);
+    bool setSpeed(uint8_t address, uint8_t speed, bool forward);
+    bool writeCV(uint8_t address, uint16_t cv, uint8_t value);
+    uint8_t readCV(uint8_t address, uint16_t cv);
+
+private:
+    SUSI_Master _master;
 };
 
 #endif // SUSI_MASTER_H

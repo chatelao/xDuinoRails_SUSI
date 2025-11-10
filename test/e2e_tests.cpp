@@ -11,24 +11,24 @@ protected:
     const uint8_t DATA_PIN = 3;
     const uint8_t SLAVE_ADDRESS = 5;
 
-    EndToEndTest() : master(CLOCK_PIN, DATA_PIN), slave(CLOCK_PIN, DATA_PIN) {}
+    EndToEndTest() : master_api(CLOCK_PIN, DATA_PIN), slave(CLOCK_PIN, DATA_PIN) {}
 
     void SetUp() override {
         mock_hal_reset();
-        master.begin();
+        master_api.begin();
         slave.begin(SLAVE_ADDRESS);
         // Set initial clock state to HIGH
         digitalWrite(CLOCK_PIN, HIGH);
     }
 
-    SUSI_Master master;
+    SUSI_Master_API master_api;
     SUSI_Slave slave;
 };
 
 TEST_F(EndToEndTest, TrueEndToEnd_SendAndReceiveSetSpeedPacket) {
     // The master's sendPacket will now automatically trigger the slave's
     // interrupt handler via the enhanced mock HAL.
-    master.setSpeed(SLAVE_ADDRESS, 100, true);
+    master_api.setSpeed(SLAVE_ADDRESS, 100, true);
 
     EXPECT_TRUE(slave.available());
     SUSI_Packet received_packet = slave.read();

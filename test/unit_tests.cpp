@@ -7,7 +7,7 @@
 #include <vector>
 
 // Helper function to verify the sequence of digitalWrite calls
-void verify_packet_sequence(const SUSI_Packet& packet) {
+void verify_packet_sequence(const std::vector<SUSI_Packet>& packets) {
     std::vector<Call> expected_calls;
     auto add_bit = [&](bool bit) {
         expected_calls.push_back({3, (uint8_t)bit}); // Data pin
@@ -15,21 +15,23 @@ void verify_packet_sequence(const SUSI_Packet& packet) {
         expected_calls.push_back({2, HIGH});         // Clock pin
     };
 
-    // Start bit
-    add_bit(LOW);
+    for (const auto& packet : packets) {
+        // Start bit
+        add_bit(LOW);
 
-    // Address, Command, Data (LSB first)
-    uint32_t packet_data = 0;
-    packet_data |= (uint32_t)packet.address;
-    packet_data |= (uint32_t)packet.command << 8;
-    packet_data |= (uint32_t)packet.data << 16;
+        // Address, Command, Data (LSB first)
+        uint32_t packet_data = 0;
+        packet_data |= (uint32_t)packet.address;
+        packet_data |= (uint32_t)packet.command << 8;
+        packet_data |= (uint32_t)packet.data << 16;
 
-    for (int i = 0; i < 24; ++i) {
-        add_bit((packet_data >> i) & 0x01);
+        for (int i = 0; i < 24; ++i) {
+            add_bit((packet_data >> i) & 0x01);
+        }
+
+        // Stop bit
+        add_bit(HIGH);
     }
-
-    // Stop bit
-    add_bit(HIGH);
 
     // Skip the first 2 calls from begin()
     ASSERT_EQ(digitalWrite_calls.size() - 2, expected_calls.size());
@@ -37,6 +39,11 @@ void verify_packet_sequence(const SUSI_Packet& packet) {
         EXPECT_EQ(digitalWrite_calls[i + 2].pin, expected_calls[i].pin);
         EXPECT_EQ(digitalWrite_calls[i + 2].value, expected_calls[i].value);
     }
+}
+
+// Overload for a single packet
+void verify_packet_sequence(const SUSI_Packet& packet) {
+    verify_packet_sequence(std::vector<SUSI_Packet>{packet});
 }
 
 
@@ -100,42 +107,57 @@ TEST_F(SusiHALTest, WaitForAck_TooLong) {
 }
 
 
-class SUSIMasterTest : public ::testing::Test {
+class SUSIMasterAPITest : public ::testing::Test {
 protected:
     const uint8_t CLOCK_PIN = 2;
     const uint8_t DATA_PIN = 3;
 
-    SUSIMasterTest() : master(CLOCK_PIN, DATA_PIN) {}
+    SUSIMasterAPITest() : api(CLOCK_PIN, DATA_PIN) {}
 
     void SetUp() override {
         mock_hal_reset();
-        master.begin();
+        api.begin();
     }
 
-    SUSI_Master master;
+    SUSI_Master_API api;
 };
 
-TEST_F(SUSIMasterTest, Initialization) {
-    // master.begin() is called in SetUp()
+TEST_F(SUSIMasterAPITest, Initialization) {
+    // api.begin() is called in SetUp()
     SUCCEED();
 }
 
-TEST_F(SUSIMasterTest, SendPacket) {
-    SUSI_Packet packet_to_send = {0x05, 0xAB, 0xCD};
-    master.sendPacket(packet_to_send, false);
-    verify_packet_sequence(packet_to_send);
+TEST_F(SUSIMasterAPITest, SetFunction) {
+    ack_pulse_start_time = 100;
+    ack_pulse_duration = 1000;
+    api.setFunction(5, 10, true);
+    SUSI_Packet expected_packet = {0x05, SUSI_CMD_SET_FUNCTION, (10 & 0x1F) | 0x80};
+    verify_packet_sequence(expected_packet);
 }
 
-TEST_F(SUSIMasterTest, SetSpeed) {
-    master.setSpeed(5, 100, true);
+TEST_F(SUSIMasterAPITest, SetSpeed) {
+    ack_pulse_start_time = 100;
+    ack_pulse_duration = 1000;
+    api.setSpeed(5, 100, true);
     SUSI_Packet expected_packet = {0x05, SUSI_CMD_SET_SPEED, (100 & 0x7F) | 0x80};
     verify_packet_sequence(expected_packet);
 }
 
-TEST_F(SUSIMasterTest, ReadCV) {
+TEST_F(SUSIMasterAPITest, WriteCV) {
+    ack_pulse_start_time = 100;
+    ack_pulse_duration = 1000;
+    api.writeCV(5, 0x0123, 0xAB);
+    std::vector<SUSI_Packet> expected_packets = {
+        {0x05, SUSI_CMD_WRITE_CV, 0x01},
+        {0x05, 0x23, 0xAB}
+    };
+    verify_packet_sequence(expected_packets);
+}
+
+TEST_F(SUSIMasterAPITest, ReadCV) {
     // This test is currently too complex for the mock HAL.
     // I will simplify it for now and revisit it.
-    EXPECT_EQ(master.readCV(5, 123), 0);
+    EXPECT_EQ(api.readCV(5, 123), 0);
 }
 
 
