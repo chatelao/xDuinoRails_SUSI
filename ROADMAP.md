@@ -32,7 +32,7 @@ To ensure a robust and testable library, the following principles should be foll
 - [x] **[M3]** Create data structures/classes to represent SUSI packets.
 - [x] **[M4]** Write a low-level function to transmit a single SUSI packet bit-by-bit.
 - [x] **[RCN600-M4]** Implement helper functions to encode and send standard SUSI commands as defined in RCN-600.
-- [ ] **[M6]** Create a high-level API for sending commands to a specific slave address.
+- [x] **[M6]** Create a high-level API for sending commands to a specific slave address.
 - [ ] **[M9]** Implement state management for the master (e.g., tracking last command, waiting for response).
 - [ ] **[M14]** Add error handling for timeouts or invalid responses from a slave.
 
@@ -45,11 +45,11 @@ To ensure a robust and testable library, the following principles should be foll
 - [x] **[S5]** Validate the received packet (e.g., start/stop bits).
 - [x] **[RCN600-S1]** Implement protocol timing and synchronization logic:
     - [x] Implement an 8ms timeout to reset the packet buffer if a byte is incomplete, preventing synchronization loss.
-- [ ] **[RCN600-S2]** Implement Acknowledge (ACK) generation:
-    - [ ] For commands requiring a response, generate a 1-2ms ACK pulse on the data line.
-- [ ] **[S6]** Check if the packet's address matches the slave's configured address.
-- [ ] **[S7]** Parse the command and data bytes from the validated packet.
-- [ ] **[S8]** Implement a state machine to process received commands.
+- [x] **[RCN600-S2]** Implement Acknowledge (ACK) generation:
+    - [x] For commands requiring a response, generate a 1-2ms ACK pulse on the data line.
+- [x] **[S6]** Check if the packet's address matches the slave's configured address.
+- [x] **[S7]** Parse the command and data bytes from the validated packet.
+- [x] **[S8]** Implement a state machine to process received commands.
 - [ ] **[S12]** Implement logic to manage the state of functions (e.g., lights).
 - [ ] **[S17]** Create a callback system for the user's sketch to be notified of events (e.g., `onFunctionChange`).
 

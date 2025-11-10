@@ -7,7 +7,7 @@ const unsigned long SUSI_SYNC_GAP_MS = 9;
 const uint8_t SUSI_PACKETS_PER_SYNC = 20;
 
 // SUSI_Master implementation
-SUSI_Master::SUSI_Master(uint8_t clockPin, uint8_t dataPin) : _hal(clockPin, dataPin) {
+SUSI_Master::SUSI_Master(SusiHAL& hal) : _hal(hal) {
     _last_packet_time_ms = 0;
     _packets_since_sync = 0;
 }
@@ -18,7 +18,24 @@ void SUSI_Master::begin() {
     _hal.set_data_high();  // Data idle is HIGH
 }
 
+#ifdef TESTING
+#include "mock_susi_hal.h"
+#endif
+
 bool SUSI_Master::sendPacket(const SUSI_Packet& packet, bool expectAck) {
+#ifdef TESTING
+    MockSusiHAL* mock_hal = dynamic_cast<MockSusiHAL*>(&_hal);
+    if (mock_hal) {
+        if (mock_hal->onSendPacket) {
+            bool result = mock_hal->onSendPacket(packet, expectAck);
+            if (mock_hal->afterSendPacket) {
+                mock_hal->afterSendPacket();
+            }
+            return result;
+        }
+    }
+#endif
+
     unsigned long current_time_ms = millis();
     if (current_time_ms - _last_packet_time_ms > SUSI_INTER_BYTE_TIMEOUT_MS) {
         delay(SUSI_SYNC_GAP_MS);
@@ -74,7 +91,7 @@ uint8_t SUSI_Master::readByteAfterRequest() {
 }
 
 // SUSI_Master_API implementation
-SUSI_Master_API::SUSI_Master_API(uint8_t clockPin, uint8_t dataPin) : _master(clockPin, dataPin) {}
+SUSI_Master_API::SUSI_Master_API(SUSI_Master& master) : _master(master) {}
 
 void SUSI_Master_API::begin() {
     _master.begin();
@@ -97,33 +114,35 @@ bool SUSI_Master_API::setSpeed(uint8_t address, uint8_t speed, bool forward) {
 }
 
 bool SUSI_Master_API::writeCV(uint8_t address, uint16_t cv, uint8_t value) {
+    uint16_t cv_addr = cv - 1;
     SUSI_Packet packet1;
     packet1.address = address;
     packet1.command = SUSI_CMD_WRITE_CV;
-    packet1.data = (cv >> 8) & 0x03;
+    packet1.data = (cv_addr >> 8) & 0x03;
     if (!_master.sendPacket(packet1, true)) {
         return false;
     }
 
     SUSI_Packet packet2;
     packet2.address = address;
-    packet2.command = cv & 0xFF;
+    packet2.command = cv_addr & 0xFF;
     packet2.data = value;
     return _master.sendPacket(packet2, true);
 }
 
 uint8_t SUSI_Master_API::readCV(uint8_t address, uint16_t cv) {
+    uint16_t cv_addr = cv - 1;
     SUSI_Packet packet1;
     packet1.address = address;
     packet1.command = SUSI_CMD_READ_CV;
-    packet1.data = (cv >> 8) & 0x03;
+    packet1.data = (cv_addr >> 8) & 0x03;
     if (!_master.sendPacket(packet1, true)) {
         return 0;
     }
 
     SUSI_Packet packet2;
     packet2.address = address;
-    packet2.command = cv & 0xFF;
+    packet2.command = cv_addr & 0xFF;
     packet2.data = 0;
     if (!_master.sendPacket(packet2, true)) {
         return 0;

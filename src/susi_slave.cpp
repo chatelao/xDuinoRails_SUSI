@@ -13,6 +13,11 @@ SUSI_Slave::SUSI_Slave(uint8_t clockPin, uint8_t dataPin) : _hal(clockPin, dataP
     _susi_slave_instance = this;
     _speed = 0;
     _forward = false;
+    _functions = 0;
+    _cv_bank = 0;
+    _cv_count = 0;
+    _cv_address = 0;
+    _cv_read_mode = false;
 }
 
 void SUSI_Slave::begin(uint8_t address) {
@@ -38,12 +43,67 @@ SUSI_Packet SUSI_Slave::read() {
         _packetReady = false;
         interrupts();
 
-        if (packet.command == SUSI_CMD_SET_SPEED) {
-            _speed = packet.data & 0x7F;
-            _forward = (packet.data & 0x80) != 0;
+        switch (packet.command) {
+            case SUSI_CMD_SET_SPEED:
+                _speed = packet.data & 0x7F;
+                _forward = (packet.data & 0x80) != 0;
+                _hal.sendAckPulse();
+                break;
+            case SUSI_CMD_SET_FUNCTION:
+                {
+                    uint8_t function = packet.data & 0x1F;
+                    bool on = (packet.data & 0x80) != 0;
+                    if (on) {
+                        _functions |= (1L << function);
+                    } else {
+                        _functions &= ~(1L << function);
+                    }
+                    _hal.sendAckPulse();
+                }
+                break;
+            case SUSI_CMD_WRITE_CV:
+                _cv_bank = packet.data + 1;
+                _cv_read_mode = false;
+                _hal.sendAckPulse();
+                break;
+            case SUSI_CMD_READ_CV:
+                _cv_bank = packet.data + 1;
+                _cv_read_mode = true;
+                _hal.sendAckPulse();
+                break;
+            default:
+                if (_cv_bank != 0) {
+                    _cv_address = ((_cv_bank - 1) << 8) | packet.command;
+                    if (_cv_read_mode) {
+                        _hal.sendByte(readCV(_cv_address + 1));
+                    } else {
+                        for (int i = 0; i < _cv_count; i++) {
+                            if (_cv_keys[i] == _cv_address) {
+                                _cv_values[i] = packet.data;
+                                _cv_bank = 0;
+                                return packet;
+                            }
+                        }
+                        if (_cv_count < MAX_CVS) {
+                            _cv_keys[_cv_count] = _cv_address;
+                            _cv_values[_cv_count] = packet.data;
+                            _cv_count++;
+                        }
+                    }
+                    _cv_bank = 0;
+                }
         }
     }
     return packet;
+}
+
+uint8_t SUSI_Slave::readCV(uint16_t cv) {
+    for (int i = 0; i < _cv_count; i++) {
+        if (_cv_keys[i] == cv - 1) {
+            return _cv_values[i];
+        }
+    }
+    return 0;
 }
 
 void SUSI_Slave::onClockFall() {

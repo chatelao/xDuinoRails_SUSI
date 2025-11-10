@@ -5,6 +5,8 @@
 #include "susi_hal.h"
 #include "susi_packet.h"
 
+const uint8_t MAX_CVS = 32;
+
 class SUSI_Slave {
 public:
     SUSI_Slave(uint8_t clockPin, uint8_t dataPin);
@@ -15,6 +17,8 @@ public:
 public:
     uint8_t getSpeed() const { return _speed; }
     bool getDirection() const { return _forward; }
+    bool getFunction(uint8_t function) const { return (_functions >> function) & 1; }
+    uint8_t readCV(uint16_t cv);
 
 private:
     static void onClockFall();
@@ -28,6 +32,13 @@ private:
     volatile unsigned long _last_bit_time_us;
     uint8_t _speed;
     bool _forward;
+    uint32_t _functions;
+    uint8_t _cv_bank;
+    uint16_t _cv_address;
+    bool _cv_read_mode;
+    uint16_t _cv_keys[MAX_CVS];
+    uint8_t _cv_values[MAX_CVS];
+    uint8_t _cv_count;
 };
 
 #endif // SUSI_SLAVE_H

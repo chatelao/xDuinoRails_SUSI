@@ -6,15 +6,18 @@
 class SusiHAL {
 public:
     SusiHAL(uint8_t clock_pin, uint8_t data_pin);
-    void begin();
-    void set_clock_high();
-    void set_clock_low();
-    void generate_clock_pulse();
-    void set_data_high();
-    void set_data_low();
-    bool read_data();
-    bool read_bit();
-    bool waitForAck();
+    virtual ~SusiHAL() = default;
+    virtual void begin();
+    virtual void set_clock_high();
+    virtual void set_clock_low();
+    virtual void generate_clock_pulse();
+    virtual void set_data_high();
+    virtual void set_data_low();
+    virtual bool read_data();
+    virtual bool read_bit();
+    virtual bool waitForAck();
+    virtual void sendAckPulse();
+    virtual void sendByte(uint8_t byte);
 
     uint8_t get_clock_pin() const { return _clock_pin; }
 
