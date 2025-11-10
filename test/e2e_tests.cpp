@@ -1,7 +1,8 @@
 #include "gtest/gtest.h"
-#include "SUSI_Master.h"
-#include "SUSI_Slave.h"
+#include "susi_master.h"
+#include "susi_slave.h"
 #include "mock_hal.h"
+#include "susi_commands.h"
 
 // Test fixture for End-to-End tests
 class EndToEndTest : public ::testing::Test {
@@ -10,12 +11,12 @@ protected:
     const uint8_t DATA_PIN = 3;
     const uint8_t SLAVE_ADDRESS = 5;
 
-    EndToEndTest() : master(CLOCK_PIN, DATA_PIN), slave(CLOCK_PIN, DATA_PIN, SLAVE_ADDRESS) {}
+    EndToEndTest() : master(CLOCK_PIN, DATA_PIN), slave(CLOCK_PIN, DATA_PIN) {}
 
     void SetUp() override {
         mock_hal_reset();
         master.begin();
-        slave.begin();
+        slave.begin(SLAVE_ADDRESS);
         // Set initial clock state to HIGH
         digitalWrite(CLOCK_PIN, HIGH);
     }
@@ -24,17 +25,17 @@ protected:
     SUSI_Slave slave;
 };
 
-TEST_F(EndToEndTest, TrueEndToEnd_SendAndReceivePacket) {
-    SUSI_Packet packet_to_send = {SLAVE_ADDRESS, 0xAB, 0xCD};
-
+TEST_F(EndToEndTest, TrueEndToEnd_SendAndReceiveSetSpeedPacket) {
     // The master's sendPacket will now automatically trigger the slave's
     // interrupt handler via the enhanced mock HAL.
-    master.sendPacket(packet_to_send, false); // Send without ACK for this test
+    master.setSpeed(SLAVE_ADDRESS, 100, true);
 
-    // Manually trigger the slave's loop to process the packet
-    slave.loop();
+    EXPECT_TRUE(slave.available());
+    SUSI_Packet received_packet = slave.read();
+    EXPECT_EQ(received_packet.address, SLAVE_ADDRESS);
+    EXPECT_EQ(received_packet.command, SUSI_CMD_SET_SPEED);
+    EXPECT_EQ(received_packet.data, (100 & 0x7F) | 0x80);
 
-    EXPECT_EQ(slave._last_received_packet.address, packet_to_send.address);
-    EXPECT_EQ(slave._last_received_packet.command, packet_to_send.command);
-    EXPECT_EQ(slave._last_received_packet.data, packet_to_send.data);
+    EXPECT_EQ(slave.getSpeed(), 100);
+    EXPECT_TRUE(slave.getDirection());
 }
