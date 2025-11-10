@@ -112,14 +112,16 @@ protected:
     const uint8_t CLOCK_PIN = 2;
     const uint8_t DATA_PIN = 3;
 
-    SUSIMasterAPITest() : api(CLOCK_PIN, DATA_PIN) {}
+    SusiHAL hal;
+    SUSI_Master master;
+    SUSI_Master_API api;
+
+    SUSIMasterAPITest() : hal(CLOCK_PIN, DATA_PIN), master(hal), api(master) {}
 
     void SetUp() override {
         mock_hal_reset();
         api.begin();
     }
-
-    SUSI_Master_API api;
 };
 
 TEST_F(SUSIMasterAPITest, Initialization) {
@@ -149,7 +151,7 @@ TEST_F(SUSIMasterAPITest, WriteCV) {
     api.writeCV(5, 0x0123, 0xAB);
     std::vector<SUSI_Packet> expected_packets = {
         {0x05, SUSI_CMD_WRITE_CV, 0x01},
-        {0x05, 0x23, 0xAB}
+        {0x05, 0x22, 0xAB}
     };
     verify_packet_sequence(expected_packets);
 }

@@ -11,7 +11,12 @@ protected:
     const uint8_t DATA_PIN = 3;
     const uint8_t SLAVE_ADDRESS = 5;
 
-    EndToEndTest() : master_api(CLOCK_PIN, DATA_PIN), slave(CLOCK_PIN, DATA_PIN) {}
+    SusiHAL hal;
+    SUSI_Master master;
+    SUSI_Master_API master_api;
+    SUSI_Slave slave;
+
+    EndToEndTest() : hal(CLOCK_PIN, DATA_PIN), master(hal), master_api(master), slave(CLOCK_PIN, DATA_PIN) {}
 
     void SetUp() override {
         mock_hal_reset();
@@ -20,9 +25,6 @@ protected:
         // Set initial clock state to HIGH
         digitalWrite(CLOCK_PIN, HIGH);
     }
-
-    SUSI_Master_API master_api;
-    SUSI_Slave slave;
 };
 
 TEST_F(EndToEndTest, TrueEndToEnd_SendAndReceiveSetSpeedPacket) {

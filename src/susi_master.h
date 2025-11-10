@@ -7,13 +7,13 @@
 
 class SUSI_Master {
 public:
-    SUSI_Master(uint8_t clockPin, uint8_t dataPin);
+    SUSI_Master(SusiHAL& hal);
     void begin();
     bool sendPacket(const SUSI_Packet& packet, bool expectAck = false);
     uint8_t readByteAfterRequest();
 
 private:
-    SusiHAL _hal;
+    SusiHAL& _hal;
     unsigned long _last_packet_time_ms;
     uint8_t _packets_since_sync;
 
@@ -22,7 +22,7 @@ private:
 
 class SUSI_Master_API {
 public:
-    SUSI_Master_API(uint8_t clockPin, uint8_t dataPin);
+    SUSI_Master_API(SUSI_Master& master);
     void begin();
 
     bool setFunction(uint8_t address, uint8_t function, bool on);

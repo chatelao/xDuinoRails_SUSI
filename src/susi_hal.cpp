@@ -77,3 +77,11 @@ bool SusiHAL::waitForAck() {
 
     return false;
 }
+
+void SusiHAL::sendAckPulse() {
+    pinMode(_data_pin, OUTPUT);
+    digitalWrite(_data_pin, LOW);
+    delay(1); // 1-2ms ACK pulse
+    digitalWrite(_data_pin, HIGH);
+    pinMode(_data_pin, INPUT);
+}

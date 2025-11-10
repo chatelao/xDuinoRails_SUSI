@@ -2,6 +2,7 @@
 #define SUSI_SLAVE_H
 
 #include <Arduino.h>
+#include <map>
 #include "susi_hal.h"
 #include "susi_packet.h"
 
@@ -15,6 +16,8 @@ public:
 public:
     uint8_t getSpeed() const { return _speed; }
     bool getDirection() const { return _forward; }
+    bool getFunction(uint8_t function) const { return (_functions >> function) & 1; }
+    uint8_t readCV(uint16_t cv) { return _cvs[cv - 1]; }
 
 private:
     static void onClockFall();
@@ -28,6 +31,9 @@ private:
     volatile unsigned long _last_bit_time_us;
     uint8_t _speed;
     bool _forward;
+    uint32_t _functions;
+    std::map<uint16_t, uint8_t> _cvs;
+    uint8_t _cv_bank;
 };
 
 #endif // SUSI_SLAVE_H

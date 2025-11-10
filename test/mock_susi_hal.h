@@ -1,0 +1,27 @@
+#ifndef MOCK_SUSI_HAL_H
+#define MOCK_SUSI_HAL_H
+
+#include "susi_hal.h"
+#include "susi_packet.h"
+#include <functional>
+
+class MockSusiHAL : public SusiHAL {
+public:
+    MockSusiHAL() : SusiHAL(0, 0) {}
+
+    std::function<bool(const SUSI_Packet&, bool)> onSendPacket;
+    std::function<void()> afterSendPacket;
+
+    void begin() override {}
+    void set_clock_high() override {}
+    void set_clock_low() override {}
+    void generate_clock_pulse() override {}
+    void set_data_high() override {}
+    void set_data_low() override {}
+    bool read_data() override { return false; }
+    bool read_bit() override { return false; }
+    bool waitForAck() override { return true; }
+    void sendAckPulse() override {}
+};
+
+#endif // MOCK_SUSI_HAL_H

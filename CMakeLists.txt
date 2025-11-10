@@ -19,6 +19,8 @@ add_executable(run_tests
   ${LIB_SOURCES}
   test/e2e_tests.cpp
   test/unit_tests.cpp
+  test/test_susi_api.cpp
+  test/test_susi_e2e.cpp
 )
 
 # Link the test executable with Google Test
