@@ -1,5 +1,9 @@
 #include "SUSI_Slave.h"
 
+#ifndef IRAM_ATTR
+#define IRAM_ATTR
+#endif
+
 // [S2] Interrupt-driven routine - static instance and ISR
 SUSI_Slave* SUSI_Slave::instance = nullptr;
 
