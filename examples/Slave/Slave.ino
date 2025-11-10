@@ -1,4 +1,4 @@
-#include <SUSI_Slave.h>
+#include <susi_slave.h>
 
 // Define the pins for the SUSI bus
 const uint8_t CLOCK_PIN = 2;
@@ -8,18 +8,26 @@ const uint8_t DATA_PIN = 3;
 const uint8_t SLAVE_ADDRESS = 1;
 
 // Create a SUSI_Slave instance
-SUSI_Slave susi(CLOCK_PIN, DATA_PIN, SLAVE_ADDRESS);
+SUSI_Slave susi(CLOCK_PIN, DATA_PIN);
 
 void setup() {
   Serial.begin(9600);
   while (!Serial);
 
-  susi.begin();
+  susi.begin(SLAVE_ADDRESS);
 
   Serial.println("SUSI Slave Example");
 }
 
 void loop() {
   // The loop() function will check for and process incoming packets
-  susi.loop();
+  if (susi.available()) {
+    SUSI_Packet packet = susi.read();
+    Serial.print("Received packet: ");
+    Serial.print(packet.address);
+    Serial.print(" ");
+    Serial.print(packet.command);
+    Serial.print(" ");
+    Serial.println(packet.data);
+  }
 }

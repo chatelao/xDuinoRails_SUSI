@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 #include "susi_hal.h"
-#include "SUSI_Packet.h"
+#include "susi_packet.h"
 
 class SUSI_Master {
 public:
@@ -14,6 +14,7 @@ public:
 
     // [M5] Helper functions to encode standard SUSI commands
     bool setFunction(uint8_t address, uint8_t function, bool on);
+    bool setSpeed(uint8_t address, uint8_t speed, bool forward);
     bool writeCV(uint8_t address, uint16_t cv, uint8_t value);
     uint8_t readCV(uint8_t address, uint16_t cv);
 

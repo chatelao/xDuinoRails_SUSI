@@ -1,4 +1,4 @@
-#include <SUSI_Master.h>
+#include <susi_master.h>
 
 // Define the pins for the SUSI bus
 const uint8_t CLOCK_PIN = 2;

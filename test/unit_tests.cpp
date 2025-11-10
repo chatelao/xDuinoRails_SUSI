@@ -1,8 +1,9 @@
 #include "gtest/gtest.h"
 #include "susi_hal.h"
 #include "mock_hal.h"
-#include "SUSI_Master.h"
-#include "SUSI_Slave.h"
+#include "susi_master.h"
+#include "susi_slave.h"
+#include "susi_commands.h"
 #include <vector>
 
 // Helper function to verify the sequence of digitalWrite calls
@@ -125,6 +126,12 @@ TEST_F(SUSIMasterTest, SendPacket) {
     verify_packet_sequence(packet_to_send);
 }
 
+TEST_F(SUSIMasterTest, SetSpeed) {
+    master.setSpeed(5, 100, true);
+    SUSI_Packet expected_packet = {0x05, SUSI_CMD_SET_SPEED, (100 & 0x7F) | 0x80};
+    verify_packet_sequence(expected_packet);
+}
+
 TEST_F(SUSIMasterTest, ReadCV) {
     // This test is currently too complex for the mock HAL.
     // I will simplify it for now and revisit it.
@@ -138,11 +145,11 @@ protected:
     const uint8_t DATA_PIN = 3;
     const uint8_t SLAVE_ADDRESS = 5;
 
-    SUSISlaveTest() : slave(CLOCK_PIN, DATA_PIN, SLAVE_ADDRESS) {}
+    SUSISlaveTest() : slave(CLOCK_PIN, DATA_PIN) {}
 
     void SetUp() override {
         mock_hal_reset();
-        slave.begin();
+        slave.begin(SLAVE_ADDRESS);
         digitalWrite(CLOCK_PIN, HIGH); // Set initial clock state
     }
 
@@ -154,7 +161,7 @@ TEST_F(SUSISlaveTest, Initialization) {
     SUCCEED();
 }
 
-TEST_F(SUSISlaveTest, PacketReception) {
+TEST_F(SUSISlaveTest, SetSpeedPacketReception) {
     // Manually send a packet to the slave by manipulating the data pin
     // and toggling the clock. The mock HAL will automatically call the
     // slave's interrupt handler on each falling edge of the clock.
@@ -164,15 +171,17 @@ TEST_F(SUSISlaveTest, PacketReception) {
     digitalWrite(CLOCK_PIN, LOW);
     digitalWrite(CLOCK_PIN, HIGH);
 
-    uint32_t packet_data = 0;
-    packet_data |= (uint32_t)SLAVE_ADDRESS;
-    packet_data |= (uint32_t)0xAB << 8;
-    packet_data |= (uint32_t)0xCD << 16;
+    uint8_t packet_bytes[3];
+    packet_bytes[0] = SLAVE_ADDRESS;
+    packet_bytes[1] = SUSI_CMD_SET_SPEED;
+    packet_bytes[2] = (100 & 0x7F) | 0x80;
 
-    for (int i = 0; i < 24; ++i) {
-        digitalWrite(DATA_PIN, (packet_data >> i) & 0x01);
-        digitalWrite(CLOCK_PIN, LOW);
-        digitalWrite(CLOCK_PIN, HIGH);
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 8; ++j) {
+            digitalWrite(DATA_PIN, (packet_bytes[i] >> j) & 0x01);
+            digitalWrite(CLOCK_PIN, LOW);
+            digitalWrite(CLOCK_PIN, HIGH);
+        }
     }
 
     // Stop bit
@@ -180,6 +189,9 @@ TEST_F(SUSISlaveTest, PacketReception) {
     digitalWrite(CLOCK_PIN, LOW);
     digitalWrite(CLOCK_PIN, HIGH);
 
-    EXPECT_TRUE(slave.getPacketReady());
-    EXPECT_EQ(slave.getDataBuffer(), packet_data);
+    EXPECT_TRUE(slave.available());
+    SUSI_Packet received_packet = slave.read();
+    EXPECT_EQ(received_packet.address, SLAVE_ADDRESS);
+    EXPECT_EQ(received_packet.command, SUSI_CMD_SET_SPEED);
+    EXPECT_EQ(received_packet.data, (100 & 0x7F) | 0x80);
 }

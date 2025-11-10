@@ -16,6 +16,8 @@ public:
     bool read_bit();
     bool waitForAck();
 
+    uint8_t get_clock_pin() const { return _clock_pin; }
+
 private:
     uint8_t _clock_pin;
     uint8_t _data_pin;
