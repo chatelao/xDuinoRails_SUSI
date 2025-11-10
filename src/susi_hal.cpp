@@ -18,6 +18,13 @@ void SusiHAL::set_clock_low() {
     digitalWrite(_clock_pin, LOW);
 }
 
+void SusiHAL::generate_clock_pulse() {
+    set_clock_low();
+    delayMicroseconds(10);
+    set_clock_high();
+    delayMicroseconds(10);
+}
+
 void SusiHAL::set_data_high() {
     digitalWrite(_data_pin, HIGH);
 }
@@ -31,4 +38,42 @@ bool SusiHAL::read_data() {
     bool value = digitalRead(_data_pin);
     pinMode(_data_pin, OUTPUT);
     return value;
+}
+
+bool SusiHAL::read_bit() {
+    set_clock_low();
+    delayMicroseconds(10);
+    bool value = read_data();
+    set_clock_high();
+    delayMicroseconds(10);
+    return value;
+}
+
+bool SusiHAL::waitForAck() {
+    unsigned long start_time = millis();
+
+    // Wait for the data line to go LOW (start of ACK)
+    while (read_data()) {
+        if (millis() - start_time > 20) {
+            return false; // Timeout
+        }
+    }
+
+    unsigned long pulse_start_time = micros();
+
+    // Wait for the data line to go HIGH again (end of ACK)
+    while (!read_data()) {
+        if (millis() - start_time > 20) {
+            return false; // Timeout
+        }
+    }
+
+    unsigned long pulse_duration = micros() - pulse_start_time;
+
+    // Check if the pulse duration is within the valid range (0.5ms to 7ms)
+    if (pulse_duration >= 500 && pulse_duration <= 7000) {
+        return true;
+    }
+
+    return false;
 }
