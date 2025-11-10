@@ -1,9 +1,5 @@
 #include "SUSI_Master.h"
-
-// SUSI Command Constants
-const uint8_t SUSI_CMD_SET_FUNCTION = 0x01;
-const uint8_t SUSI_CMD_WRITE_CV = 0x02;
-const uint8_t SUSI_CMD_READ_CV = 0x03;
+#include "susi_commands.h"
 
 // Timing constants from the SUSI specification
 const unsigned long SUSI_INTER_BYTE_TIMEOUT_MS = 7;
@@ -75,6 +71,14 @@ bool SUSI_Master::setFunction(uint8_t address, uint8_t function, bool on) {
     packet.address = address;
     packet.command = SUSI_CMD_SET_FUNCTION;
     packet.data = (function & 0x1F) | (on ? 0x80 : 0x00);
+    return sendPacket(packet, true);
+}
+
+bool SUSI_Master::setSpeed(uint8_t address, uint8_t speed, bool forward) {
+    SUSI_Packet packet;
+    packet.address = address;
+    packet.command = SUSI_CMD_SET_SPEED;
+    packet.data = (speed & 0x7F) | (forward ? 0x80 : 0x00);
     return sendPacket(packet, true);
 }
 

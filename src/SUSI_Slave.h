@@ -2,41 +2,31 @@
 #define SUSI_SLAVE_H
 
 #include <Arduino.h>
+#include "susi_hal.h"
 #include "SUSI_Packet.h"
 
 class SUSI_Slave {
 public:
-    friend void SUSI_Slave_ISR();
-    friend class EndToEndTest; // Grant access to the test fixture
-    friend class SUSISlaveTest; // Grant access to the unit test fixture
+    SUSI_Slave(uint8_t clockPin, uint8_t dataPin);
+    void begin(uint8_t address);
+    bool available();
+    SUSI_Packet read();
 
-    // [S1] HAL for the slave's clock and data pins.
-    SUSI_Slave(uint8_t clockPin, uint8_t dataPin, uint8_t address);
-
-    void begin();
-    void loop();
-
-    // [S2] Interrupt-driven routine
-    void handleClockInterrupt();
+public:
+    uint8_t getSpeed() const { return _speed; }
+    bool getDirection() const { return _forward; }
 
 private:
-    static SUSI_Slave* instance;
+    static void onClockFall();
+    void handleClockFall();
 
-    uint8_t _clockPin;
-    uint8_t _dataPin;
+    SusiHAL _hal;
     uint8_t _address;
-
-    // [S4] Bit assembly state variables
-    volatile uint8_t _bitCount;
-    volatile uint32_t _dataBuffer;
     volatile bool _packetReady;
-
-#ifdef TESTING
-public:
-    SUSI_Packet _last_received_packet;
-    bool getPacketReady() const { return _packetReady; }
-    uint32_t getDataBuffer() const { return _dataBuffer; }
-#endif
+    volatile uint8_t _buffer[3];
+    volatile uint8_t _bitCount;
+    uint8_t _speed;
+    bool _forward;
 };
 
 #endif // SUSI_SLAVE_H

@@ -1,84 +1,84 @@
 #include "SUSI_Slave.h"
+#include "susi_commands.h"
 
-#ifndef IRAM_ATTR
-#define IRAM_ATTR
-#endif
+static SUSI_Slave*_susi_slave_instance = nullptr;
 
-// [S2] Interrupt-driven routine - static instance and ISR
-SUSI_Slave* SUSI_Slave::instance = nullptr;
+SUSI_Slave::SUSI_Slave(uint8_t clockPin, uint8_t dataPin) : _hal(clockPin, dataPin) {
+    _packetReady = false;
+    _bitCount = 0;
+    _buffer[0] = 0;
+    _buffer[1] = 0;
+    _buffer[2] = 0;
+    _susi_slave_instance = this;
+    _speed = 0;
+    _forward = false;
+}
 
-void IRAM_ATTR SUSI_Slave_ISR() {
-    if (SUSI_Slave::instance) {
-        SUSI_Slave::instance->handleClockInterrupt();
+void SUSI_Slave::begin(uint8_t address) {
+    _address = address;
+    _hal.begin();
+    _hal.set_data_low(); // Data line is low by default
+    attachInterrupt(digitalPinToInterrupt(_hal.get_clock_pin()), onClockFall, FALLING);
+}
+
+bool SUSI_Slave::available() {
+    return _packetReady;
+}
+
+SUSI_Packet SUSI_Slave::read() {
+    SUSI_Packet packet;
+    packet.address = _buffer[0];
+    packet.command = _buffer[1];
+    packet.data = _buffer[2];
+
+    if (packet.command == SUSI_CMD_SET_SPEED) {
+        _speed = packet.data & 0x7F;
+        _forward = (packet.data & 0x80) != 0;
+    }
+
+    _packetReady = false;
+    _buffer[0] = 0;
+    _buffer[1] = 0;
+    _buffer[2] = 0;
+    return packet;
+}
+
+void SUSI_Slave::onClockFall() {
+    if (_susi_slave_instance) {
+        _susi_slave_instance->handleClockFall();
     }
 }
 
-// [S1] HAL for the slave's clock and data pins.
-SUSI_Slave::SUSI_Slave(uint8_t clockPin, uint8_t dataPin, uint8_t address) {
-    _clockPin = clockPin;
-    _dataPin = dataPin;
-    _address = address;
-    instance = this;
+void SUSI_Slave::handleClockFall() {
+    if (_packetReady) {
+        return;
+    }
 
-    // [S4] Initialize bit assembly state variables
-    _bitCount = 0;
-    _dataBuffer = 0;
-    _packetReady = false;
-}
-
-void SUSI_Slave::begin() {
-    pinMode(_clockPin, INPUT); // Clock is an input for the slave
-    pinMode(_dataPin, INPUT);  // Data is initially an input
-    attachInterrupt(digitalPinToInterrupt(_clockPin), SUSI_Slave_ISR, FALLING);
-}
-
-void SUSI_Slave::handleClockInterrupt() {
-    // [S3] Read the data bit from the data line
-    bool dataBit = digitalRead(_dataPin);
-
-    // [S4] Assemble the incoming bits into a complete SUSI packet
-    if (_bitCount == 0) { // Start bit
-        if (dataBit == LOW) {
-            _dataBuffer = 0;
-            _bitCount++;
-        }
-    } else if (_bitCount < 25) { // Data bits (3 bytes * 8 bits)
-        if (dataBit) {
-            _dataBuffer |= (1UL << (_bitCount - 1));
-        }
+    // Ignore start bit
+    if (_bitCount == 0) {
         _bitCount++;
-    } else { // Stop bit
-        if (dataBit == HIGH) {
+        return;
+    }
+
+    // Ignore stop bit
+    if (_bitCount == 25) {
+        if (_buffer[0] == _address) {
             _packetReady = true;
         }
         _bitCount = 0;
+        return;
     }
-}
 
-void SUSI_Slave::loop() {
-    if (_packetReady) {
-        // [S5] Validate and parse the packet
-        SUSI_Packet packet;
-        packet.address = _dataBuffer & 0xFF;
-        packet.command = (_dataBuffer >> 8) & 0xFF;
-        packet.data = (_dataBuffer >> 16) & 0xFF;
+    uint8_t byteIndex = (_bitCount - 1) / 8;
+    uint8_t bitIndex = (_bitCount - 1) % 8;
 
-        // [S6] Check if the packet's address matches
-        if (packet.address == _address) {
-#ifdef TESTING
-            _last_received_packet = packet;
-#endif
-            // [S7] Packet is valid and for us, process it.
-            // For now, just print it to serial.
-            Serial.print("Received SUSI Packet: ");
-            Serial.print("Addr: ");
-            Serial.print(packet.address);
-            Serial.print(", Cmd: ");
-            Serial.print(packet.command);
-            Serial.print(", Data: ");
-            Serial.println(packet.data);
+    if (byteIndex < 3) {
+        if (_hal.read_data()) {
+            _buffer[byteIndex] |= (1 << bitIndex);
+        } else {
+            _buffer[byteIndex] &= ~(1 << bitIndex);
         }
-
-        _packetReady = false; // Reset the flag
     }
+
+    _bitCount++;
 }
