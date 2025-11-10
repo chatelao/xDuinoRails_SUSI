@@ -27,9 +27,8 @@ jobs:
 
       - name: Compile library
         run: |
-          arduino-cli lib install --zip-path .
-          arduino-cli compile --fqbn arduino:avr:uno examples/Master/Master.ino
-          arduino-cli compile --fqbn arduino:avr:uno examples/Slave/Slave.ino
+          arduino-cli compile --fqbn arduino:avr:uno --libraries . examples/Master/Master.ino
+          arduino-cli compile --fqbn arduino:avr:uno --libraries . examples/Slave/Slave.ino
 
   native_test:
     runs-on: ubuntu-latest
