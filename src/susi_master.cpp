@@ -205,3 +205,11 @@ SusiMasterResult SUSI_Master_API::readCV(uint8_t address, uint16_t cv, uint8_t& 
     value = _master.readByteAfterRequest();
     return SUCCESS;
 }
+
+SusiMasterResult SUSI_Master_API::enableBidirectionalMode(uint8_t address) {
+    SUSI_Packet packet;
+    packet.address = address;
+    packet.command = SUSI_CMD_BIDIRECTIONAL_REQUEST;
+    packet.data = 0;
+    return _master.sendPacket(packet, true);
+}

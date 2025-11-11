@@ -39,6 +39,7 @@ public:
     SusiMasterResult setSpeed(uint8_t address, uint8_t speed, bool forward);
     SusiMasterResult writeCV(uint8_t address, uint16_t cv, uint8_t value);
     SusiMasterResult readCV(uint8_t address, uint16_t cv, uint8_t& value);
+    SusiMasterResult enableBidirectionalMode(uint8_t address);
 
 private:
     SUSI_Master _master;

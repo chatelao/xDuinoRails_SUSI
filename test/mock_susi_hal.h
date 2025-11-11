@@ -25,7 +25,7 @@ public:
     bool read_data() override { return false; }
     bool read_bit() override { return false; }
     SusiMasterResult waitForAck() override { return ack_result; }
-    void sendAckPulse() override {}
+    void sendAck() override {}
 };
 
 #endif // MOCK_SUSI_HAL_H

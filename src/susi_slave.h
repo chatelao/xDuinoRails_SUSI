@@ -24,6 +24,10 @@ public:
     bool getFunction(uint8_t function) const { return (_functions >> function) & 1; }
     uint8_t readCV(uint16_t cv);
 
+#ifdef TESTING
+    bool isBidirectionalModeEnabled() const { return _bidirectional_mode; }
+#endif
+
 private:
     static void onClockFall();
     void handleClockFall();
@@ -43,6 +47,7 @@ private:
     uint16_t _cv_keys[MAX_CVS];
     uint8_t _cv_values[MAX_CVS];
     uint8_t _cv_count;
+    bool _bidirectional_mode;
     FunctionCallback _function_callback;
 };
 
