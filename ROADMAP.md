@@ -87,15 +87,17 @@ To ensure a robust and testable library, the following principles should be foll
 
 ### Master (Host) Role
 
-- [ ] **[RCN602-M1]** Implement functions to read and write CVs from specific modules.
-- [ ] **[RCN602-M2]** Implement support for CV banking using CV 1021.
+- [x] **[RCN602-M1]** Implement functions to read and write CVs from specific modules.
+- [x] **[RCN602-M2]** Implement support for CV banking using CV 1021.
 
 ### Slave (Module) Role
 
-- [ ] **[S9]** Implement a mechanism to store and retrieve CV values (e.g., in an array or EEPROM).
-- [ ] **[S10]** Implement the logic to handle a `Write CV` command.
-- [ ] **[S11]** Implement the logic to handle a `Read CV` command.
-- [ ] **[RCN602-S2]** Implement support for CV banking using CV 1021.
+- [x] **[S9]** Implement a mechanism to store and retrieve CV values.
+  - > [!NOTE]
+  - > The current implementation uses a transient in-memory store. A future task is to add EEPROM support for persistent storage.
+- [x] **[S10]** Implement the logic to handle a `Write CV` command.
+- [x] **[S11]** Implement the logic to handle a `Read CV` command.
+- [x] **[RCN602-S2]** Implement support for CV banking using CV 1021.
 - [ ] **[RCN602-S3]** Implement the specific CVs defined in RCN-602:
     - [ ] CV 897: SUSI Module #
     - [ ] CV 900 / 940 / 980: Manufacturer and Hardware ID
