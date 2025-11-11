@@ -4,12 +4,13 @@
 #include <Arduino.h>
 #include "susi_hal.h"
 #include "susi_packet.h"
+#include "susi_response.h"
 
 class SUSI_Master {
 public:
     SUSI_Master(SusiHAL& hal);
     void begin();
-    bool sendPacket(const SUSI_Packet& packet, bool expectAck = false);
+    SusiMasterResult sendPacket(const SUSI_Packet& packet, bool expectAck = false);
     uint8_t readByteAfterRequest();
 
 private:

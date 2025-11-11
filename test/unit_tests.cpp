@@ -44,25 +44,25 @@ TEST_F(SusiHALTest, DataControl) {
 
 TEST_F(SusiHALTest, WaitForAck_Timeout) {
     // Expect a timeout because the data pin never goes low.
-    EXPECT_FALSE(hal.waitForAck());
+    EXPECT_EQ(hal.waitForAck(), TIMEOUT);
 }
 
 TEST_F(SusiHALTest, WaitForAck_Success) {
     ack_pulse_start_time = 100; // Start the pulse 100us from now
     ack_pulse_duration = 1000;  // 1ms pulse, valid
-    EXPECT_TRUE(hal.waitForAck());
+    EXPECT_EQ(hal.waitForAck(), SUCCESS);
 }
 
 TEST_F(SusiHALTest, WaitForAck_TooShort) {
     ack_pulse_start_time = 100;
     ack_pulse_duration = 400;   // 0.4ms pulse, too short
-    EXPECT_FALSE(hal.waitForAck());
+    EXPECT_EQ(hal.waitForAck(), INVALID_ACK);
 }
 
 TEST_F(SusiHALTest, WaitForAck_TooLong) {
     ack_pulse_start_time = 100;
     ack_pulse_duration = 8000;  // 8ms pulse, too long
-    EXPECT_FALSE(hal.waitForAck());
+    EXPECT_EQ(hal.waitForAck(), INVALID_ACK);
 }
 
 
@@ -95,7 +95,6 @@ TEST_F(SUSIMasterAPITest, SetFunction) {
     SUSI_Packet sentPacket;
     mock_hal.onSendPacket = [&](const SUSI_Packet& p, bool expectAck) {
         sentPacket = p;
-        return true;
     };
 
     api.setFunction(10, 5, true);
@@ -108,7 +107,6 @@ TEST_F(SUSIMasterAPITest, SetSpeed) {
     SUSI_Packet sentPacket;
     mock_hal.onSendPacket = [&](const SUSI_Packet& p, bool expectAck) {
         sentPacket = p;
-        return true;
     };
 
     api.setSpeed(10, 100, true);
@@ -121,7 +119,6 @@ TEST_F(SUSIMasterAPITest, WriteCV) {
     std::vector<SUSI_Packet> sentPackets;
     mock_hal.onSendPacket = [&](const SUSI_Packet& p, bool expectAck) {
         sentPackets.push_back(p);
-        return true;
     };
 
     api.writeCV(10, 291, 171); // CV 291 = 0x0123, Value 171 = 0xAB
@@ -165,6 +162,11 @@ TEST_F(SUSIMasterAPITest, ReadCV) {
     // This test is currently too complex for the mock HAL.
     // I will simplify it for now and revisit it.
     EXPECT_EQ(api.readCV(5, 123), 0);
+}
+
+TEST_F(SUSIMasterAPITest, SetFunction_Timeout) {
+    mock_hal.ack_result = TIMEOUT;
+    EXPECT_FALSE(api.setFunction(10, 5, true));
 }
 
 
