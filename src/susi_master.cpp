@@ -91,10 +91,25 @@ uint8_t SUSI_Master::readByteAfterRequest() {
 }
 
 // SUSI_Master_API implementation
-SUSI_Master_API::SUSI_Master_API(SUSI_Master& master) : _master(master) {}
+SUSI_Master_API::SUSI_Master_API(SUSI_Master& master) : _master(master) {
+    _slave_count = 0;
+}
 
 void SUSI_Master_API::begin() {
     _master.begin();
+}
+
+void SUSI_Master_API::reset() {
+    _slave_count = 0;
+}
+
+bool SUSI_Master_API::getFunction(uint8_t address, uint8_t function) {
+    for (int i = 0; i < _slave_count; i++) {
+        if (_slave_states[i].address == address) {
+            return (_slave_states[i].functions >> function) & 1;
+        }
+    }
+    return false;
 }
 
 bool SUSI_Master_API::setFunction(uint8_t address, uint8_t function, bool on) {
@@ -102,7 +117,42 @@ bool SUSI_Master_API::setFunction(uint8_t address, uint8_t function, bool on) {
     packet.address = address;
     packet.command = SUSI_CMD_SET_FUNCTION;
     packet.data = (function & 0x1F) | (on ? 0x80 : 0x00);
-    return _master.sendPacket(packet, true);
+    bool success = _master.sendPacket(packet, true);
+
+    if (!success) {
+        return false;
+    }
+
+    // Find existing slave state
+    SUSI_Slave_State* state = nullptr;
+    for (int i = 0; i < _slave_count; i++) {
+        if (_slave_states[i].address == address) {
+            state = &_slave_states[i];
+            break;
+        }
+    }
+
+    // Or create a new one
+    if (state == nullptr) {
+        if (_slave_count < MAX_SLAVES) {
+            state = &_slave_states[_slave_count];
+            state->address = address;
+            state->functions = 0; // Initialize functions
+            _slave_count++;
+        } else {
+            // Cannot store state for new slave, but command was successful
+            return true;
+        }
+    }
+
+    // Update the state
+    if (on) {
+        state->functions |= (1L << function);
+    } else {
+        state->functions &= ~(1L << function);
+    }
+
+    return true;
 }
 
 bool SUSI_Master_API::setSpeed(uint8_t address, uint8_t speed, bool forward) {

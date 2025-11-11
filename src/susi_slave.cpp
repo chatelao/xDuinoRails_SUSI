@@ -18,12 +18,17 @@ SUSI_Slave::SUSI_Slave(uint8_t clockPin, uint8_t dataPin) : _hal(clockPin, dataP
     _cv_count = 0;
     _cv_address = 0;
     _cv_read_mode = false;
+    _function_callback = nullptr;
 }
 
 void SUSI_Slave::begin(uint8_t address) {
     _address = address;
     _hal.begin();
     attachInterrupt(digitalPinToInterrupt(_hal.get_clock_pin()), onClockFall, FALLING);
+}
+
+void SUSI_Slave::onFunctionChange(FunctionCallback callback) {
+    _function_callback = callback;
 }
 
 bool SUSI_Slave::available() {
@@ -57,6 +62,9 @@ SUSI_Packet SUSI_Slave::read() {
                         _functions |= (1L << function);
                     } else {
                         _functions &= ~(1L << function);
+                    }
+                    if (_function_callback != nullptr) {
+                        _function_callback(function, on);
                     }
                     _hal.sendAckPulse();
                 }
