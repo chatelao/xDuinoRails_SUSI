@@ -20,18 +20,29 @@ private:
     void sendByte(uint8_t byte);
 };
 
+const uint8_t MAX_SLAVES = 16;
+
+struct SUSI_Slave_State {
+    uint8_t address;
+    uint32_t functions;
+};
+
 class SUSI_Master_API {
 public:
     SUSI_Master_API(SUSI_Master& master);
     void begin();
+    void reset();
 
     bool setFunction(uint8_t address, uint8_t function, bool on);
+    bool getFunction(uint8_t address, uint8_t function);
     bool setSpeed(uint8_t address, uint8_t speed, bool forward);
     bool writeCV(uint8_t address, uint16_t cv, uint8_t value);
     uint8_t readCV(uint8_t address, uint16_t cv);
 
 private:
     SUSI_Master _master;
+    SUSI_Slave_State _slave_states[MAX_SLAVES];
+    uint8_t _slave_count;
 };
 
 #endif // SUSI_MASTER_H

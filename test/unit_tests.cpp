@@ -6,47 +6,6 @@
 #include "susi_commands.h"
 #include <vector>
 
-// Helper function to verify the sequence of digitalWrite calls
-void verify_packet_sequence(const std::vector<SUSI_Packet>& packets) {
-    std::vector<Call> expected_calls;
-    auto add_bit = [&](bool bit) {
-        expected_calls.push_back({3, (uint8_t)bit}); // Data pin
-        expected_calls.push_back({2, LOW});          // Clock pin
-        expected_calls.push_back({2, HIGH});         // Clock pin
-    };
-
-    for (const auto& packet : packets) {
-        // Start bit
-        add_bit(LOW);
-
-        // Address, Command, Data (LSB first)
-        uint32_t packet_data = 0;
-        packet_data |= (uint32_t)packet.address;
-        packet_data |= (uint32_t)packet.command << 8;
-        packet_data |= (uint32_t)packet.data << 16;
-
-        for (int i = 0; i < 24; ++i) {
-            add_bit((packet_data >> i) & 0x01);
-        }
-
-        // Stop bit
-        add_bit(HIGH);
-    }
-
-    // Skip the first 2 calls from begin()
-    ASSERT_EQ(digitalWrite_calls.size() - 2, expected_calls.size());
-    for (size_t i = 0; i < expected_calls.size(); ++i) {
-        EXPECT_EQ(digitalWrite_calls[i + 2].pin, expected_calls[i].pin);
-        EXPECT_EQ(digitalWrite_calls[i + 2].value, expected_calls[i].value);
-    }
-}
-
-// Overload for a single packet
-void verify_packet_sequence(const SUSI_Packet& packet) {
-    verify_packet_sequence(std::vector<SUSI_Packet>{packet});
-}
-
-
 // Test fixture for SusiHAL tests
 class SusiHALTest : public ::testing::Test {
 protected:
@@ -107,19 +66,22 @@ TEST_F(SusiHALTest, WaitForAck_TooLong) {
 }
 
 
+#include "mock_susi_hal.h"
+
 class SUSIMasterAPITest : public ::testing::Test {
 protected:
     const uint8_t CLOCK_PIN = 2;
     const uint8_t DATA_PIN = 3;
 
-    SusiHAL hal;
+    MockSusiHAL mock_hal; // Use the mock HAL
     SUSI_Master master;
     SUSI_Master_API api;
 
-    SUSIMasterAPITest() : hal(CLOCK_PIN, DATA_PIN), master(hal), api(master) {}
+    SUSIMasterAPITest() : master(mock_hal), api(master) {}
 
     void SetUp() override {
         mock_hal_reset();
+        api.reset();
         api.begin();
     }
 };
@@ -130,30 +92,73 @@ TEST_F(SUSIMasterAPITest, Initialization) {
 }
 
 TEST_F(SUSIMasterAPITest, SetFunction) {
-    ack_pulse_start_time = 100;
-    ack_pulse_duration = 1000;
-    api.setFunction(5, 10, true);
-    SUSI_Packet expected_packet = {0x05, SUSI_CMD_SET_FUNCTION, (10 & 0x1F) | 0x80};
-    verify_packet_sequence(expected_packet);
+    SUSI_Packet sentPacket;
+    mock_hal.onSendPacket = [&](const SUSI_Packet& p, bool expectAck) {
+        sentPacket = p;
+        return true;
+    };
+
+    api.setFunction(10, 5, true);
+    EXPECT_EQ(sentPacket.address, 10);
+    EXPECT_EQ(sentPacket.command, SUSI_CMD_SET_FUNCTION);
+    EXPECT_EQ(sentPacket.data, 5 | 0x80);
 }
 
 TEST_F(SUSIMasterAPITest, SetSpeed) {
-    ack_pulse_start_time = 100;
-    ack_pulse_duration = 1000;
-    api.setSpeed(5, 100, true);
-    SUSI_Packet expected_packet = {0x05, SUSI_CMD_SET_SPEED, (100 & 0x7F) | 0x80};
-    verify_packet_sequence(expected_packet);
+    SUSI_Packet sentPacket;
+    mock_hal.onSendPacket = [&](const SUSI_Packet& p, bool expectAck) {
+        sentPacket = p;
+        return true;
+    };
+
+    api.setSpeed(10, 100, true);
+    EXPECT_EQ(sentPacket.address, 10);
+    EXPECT_EQ(sentPacket.command, SUSI_CMD_SET_SPEED);
+    EXPECT_EQ(sentPacket.data, 100 | 0x80);
 }
 
 TEST_F(SUSIMasterAPITest, WriteCV) {
+    std::vector<SUSI_Packet> sentPackets;
+    mock_hal.onSendPacket = [&](const SUSI_Packet& p, bool expectAck) {
+        sentPackets.push_back(p);
+        return true;
+    };
+
+    api.writeCV(10, 291, 171); // CV 291 = 0x0123, Value 171 = 0xAB
+    ASSERT_EQ(sentPackets.size(), 2);
+    EXPECT_EQ(sentPackets[0].address, 10);
+    EXPECT_EQ(sentPackets[0].command, SUSI_CMD_WRITE_CV);
+    EXPECT_EQ(sentPackets[0].data, 1); // Bank 1
+    EXPECT_EQ(sentPackets[1].address, 10);
+    EXPECT_EQ(sentPackets[1].command, 0x22); // Low bits of CV-1 (0x122)
+    EXPECT_EQ(sentPackets[1].data, 171);
+}
+
+TEST_F(SUSIMasterAPITest, GetFunction) {
     ack_pulse_start_time = 100;
     ack_pulse_duration = 1000;
-    api.writeCV(5, 0x0123, 0xAB);
-    std::vector<SUSI_Packet> expected_packets = {
-        {0x05, SUSI_CMD_WRITE_CV, 0x01},
-        {0x05, 0x22, 0xAB}
-    };
-    verify_packet_sequence(expected_packets);
+
+    // Initially, the function should be off
+    EXPECT_FALSE(api.getFunction(5, 10));
+
+    // Turn the function on
+    api.setFunction(5, 10, true);
+    EXPECT_TRUE(api.getFunction(5, 10));
+
+    // Turn another function on for the same slave
+    api.setFunction(5, 12, true);
+    EXPECT_TRUE(api.getFunction(5, 12));
+
+    // Turn the first function off
+    api.setFunction(5, 10, false);
+    EXPECT_FALSE(api.getFunction(5, 10));
+    EXPECT_TRUE(api.getFunction(5, 12)); // The other function should remain on
+
+    // Test a different slave
+    EXPECT_FALSE(api.getFunction(6, 10));
+    api.setFunction(6, 10, true);
+    EXPECT_TRUE(api.getFunction(6, 10));
+    EXPECT_FALSE(api.getFunction(5, 10)); // Original slave should be unaffected
 }
 
 TEST_F(SUSIMasterAPITest, ReadCV) {
@@ -307,4 +312,70 @@ TEST_F(SUSISlaveTest, InvalidStopBit) {
     EXPECT_TRUE(slave.available());
     SUSI_Packet received_packet = slave.read();
     EXPECT_EQ(received_packet.command, 0x03);
+}
+
+// Global variables for the callback test
+static bool callback_fired = false;
+static uint8_t callback_function = 0;
+static bool callback_on = false;
+
+void test_function_callback(uint8_t function, bool on) {
+    callback_fired = true;
+    callback_function = function;
+    callback_on = on;
+}
+
+TEST_F(SUSISlaveTest, FunctionCallback) {
+    slave.onFunctionChange(test_function_callback);
+
+    // Simulate a "function on" packet
+    digitalWrite(DATA_PIN, LOW); // Start bit
+    digitalWrite(CLOCK_PIN, LOW);
+    digitalWrite(CLOCK_PIN, HIGH);
+
+    uint8_t packet_bytes[3] = {SLAVE_ADDRESS, SUSI_CMD_SET_FUNCTION, (10 & 0x1F) | 0x80};
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 8; ++j) {
+            digitalWrite(DATA_PIN, (packet_bytes[i] >> j) & 0x01);
+            digitalWrite(CLOCK_PIN, LOW);
+            digitalWrite(CLOCK_PIN, HIGH);
+        }
+    }
+
+    digitalWrite(DATA_PIN, HIGH); // Stop bit
+    digitalWrite(CLOCK_PIN, LOW);
+    digitalWrite(CLOCK_PIN, HIGH);
+
+    slave.read(); // Process the packet
+
+    EXPECT_TRUE(callback_fired);
+    EXPECT_EQ(callback_function, 10);
+    EXPECT_TRUE(callback_on);
+
+    // Reset for the next test
+    callback_fired = false;
+
+    // Simulate a "function off" packet
+    digitalWrite(DATA_PIN, LOW); // Start bit
+    digitalWrite(CLOCK_PIN, LOW);
+    digitalWrite(CLOCK_PIN, HIGH);
+
+    uint8_t packet_bytes2[3] = {SLAVE_ADDRESS, SUSI_CMD_SET_FUNCTION, (10 & 0x1F)};
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 8; ++j) {
+            digitalWrite(DATA_PIN, (packet_bytes2[i] >> j) & 0x01);
+            digitalWrite(CLOCK_PIN, LOW);
+            digitalWrite(CLOCK_PIN, HIGH);
+        }
+    }
+
+    digitalWrite(DATA_PIN, HIGH); // Stop bit
+    digitalWrite(CLOCK_PIN, LOW);
+    digitalWrite(CLOCK_PIN, HIGH);
+
+    slave.read(); // Process the packet
+
+    EXPECT_TRUE(callback_fired);
+    EXPECT_EQ(callback_function, 10);
+    EXPECT_FALSE(callback_on);
 }

@@ -7,12 +7,16 @@
 
 const uint8_t MAX_CVS = 32;
 
+typedef void (*FunctionCallback)(uint8_t, bool);
+
 class SUSI_Slave {
 public:
     SUSI_Slave(uint8_t clockPin, uint8_t dataPin);
     void begin(uint8_t address);
     bool available();
     SUSI_Packet read();
+
+    void onFunctionChange(FunctionCallback callback);
 
 public:
     uint8_t getSpeed() const { return _speed; }
@@ -39,6 +43,7 @@ private:
     uint16_t _cv_keys[MAX_CVS];
     uint8_t _cv_values[MAX_CVS];
     uint8_t _cv_count;
+    FunctionCallback _function_callback;
 };
 
 #endif // SUSI_SLAVE_H
