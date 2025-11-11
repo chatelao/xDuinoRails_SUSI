@@ -18,19 +18,45 @@ void setup() {
   Serial.println("SUSI Master Example");
 }
 
+void printResult(SusiMasterResult result) {
+  if (result == SUCCESS) {
+    Serial.println(" -> SUCCESS");
+  } else if (result == TIMEOUT) {
+    Serial.println(" -> TIMEOUT");
+  } else if (result == INVALID_ACK) {
+    Serial.println(" -> INVALID_ACK");
+  }
+}
+
 void loop() {
+  SusiMasterResult result;
+
   // Example: Turn function 1 on for slave address 1
-  Serial.println("Turning function 1 ON");
-  susi.setFunction(1, 1, true);
+  Serial.print("Turning function 1 ON");
+  result = susi.setFunction(1, 1, true);
+  printResult(result);
   delay(2000);
 
   // Example: Turn function 1 off for slave address 1
-  Serial.println("Turning function 1 OFF");
-  susi.setFunction(1, 1, false);
+  Serial.print("Turning function 1 OFF");
+  result = susi.setFunction(1, 1, false);
+  printResult(result);
   delay(2000);
 
   // Example: Write to CV 10 on slave address 1
-  Serial.println("Writing 123 to CV 10");
-  susi.writeCV(1, 10, 123);
+  Serial.print("Writing 123 to CV 10");
+  result = susi.writeCV(1, 10, 123);
+  printResult(result);
+  delay(2000);
+
+  // Example: Read from CV 10 on slave address 1
+  uint8_t cvValue;
+  Serial.print("Reading from CV 10");
+  result = susi.readCV(1, 10, cvValue);
+  printResult(result);
+  if (result == SUCCESS) {
+    Serial.print("  -> CV Value: ");
+    Serial.println(cvValue);
+  }
   delay(2000);
 }

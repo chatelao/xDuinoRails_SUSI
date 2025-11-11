@@ -132,41 +132,53 @@ TEST_F(SUSIMasterAPITest, WriteCV) {
 }
 
 TEST_F(SUSIMasterAPITest, GetFunction) {
-    ack_pulse_start_time = 100;
-    ack_pulse_duration = 1000;
+    mock_hal.ack_result = SUCCESS;
 
     // Initially, the function should be off
     EXPECT_FALSE(api.getFunction(5, 10));
 
     // Turn the function on
-    api.setFunction(5, 10, true);
+    EXPECT_EQ(api.setFunction(5, 10, true), SUCCESS);
     EXPECT_TRUE(api.getFunction(5, 10));
 
     // Turn another function on for the same slave
-    api.setFunction(5, 12, true);
+    EXPECT_EQ(api.setFunction(5, 12, true), SUCCESS);
     EXPECT_TRUE(api.getFunction(5, 12));
 
     // Turn the first function off
-    api.setFunction(5, 10, false);
+    EXPECT_EQ(api.setFunction(5, 10, false), SUCCESS);
     EXPECT_FALSE(api.getFunction(5, 10));
     EXPECT_TRUE(api.getFunction(5, 12)); // The other function should remain on
 
     // Test a different slave
     EXPECT_FALSE(api.getFunction(6, 10));
-    api.setFunction(6, 10, true);
+    EXPECT_EQ(api.setFunction(6, 10, true), SUCCESS);
     EXPECT_TRUE(api.getFunction(6, 10));
     EXPECT_FALSE(api.getFunction(5, 10)); // Original slave should be unaffected
 }
 
-TEST_F(SUSIMasterAPITest, ReadCV) {
-    // This test is currently too complex for the mock HAL.
-    // I will simplify it for now and revisit it.
-    EXPECT_EQ(api.readCV(5, 123), 0);
+TEST_F(SUSIMasterAPITest, ReadCV_Success) {
+    mock_hal.ack_result = SUCCESS;
+
+    // This is a simplified test. A full end-to-end test
+    // would be required to verify the data path.
+    uint8_t value;
+    EXPECT_EQ(api.readCV(5, 123, value), SUCCESS);
 }
 
-TEST_F(SUSIMasterAPITest, SetFunction_Timeout) {
+TEST_F(SUSIMasterAPITest, ReadCV_Timeout) {
     mock_hal.ack_result = TIMEOUT;
-    EXPECT_FALSE(api.setFunction(10, 5, true));
+    uint8_t value;
+    EXPECT_EQ(api.readCV(5, 123, value), TIMEOUT);
+    EXPECT_EQ(value, 0); // Should be set to 0 on failure
+}
+
+TEST_F(SUSIMasterAPITest, SetFunction_Error) {
+    mock_hal.ack_result = TIMEOUT;
+    EXPECT_EQ(api.setFunction(10, 5, true), TIMEOUT);
+
+    mock_hal.ack_result = INVALID_ACK;
+    EXPECT_EQ(api.setFunction(10, 5, true), INVALID_ACK);
 }
 
 

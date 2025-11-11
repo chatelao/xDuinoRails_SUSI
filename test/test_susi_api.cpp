@@ -7,15 +7,15 @@ TEST(SUSI_Master_API, setFunction) {
     MockSusiHAL hal;
     SUSI_Master master(hal);
     SUSI_Master_API api(master);
+    hal.ack_result = SUCCESS;
 
     // Capture the packet that is sent
     SUSI_Packet sentPacket;
     hal.onSendPacket = [&](const SUSI_Packet& p, bool a) {
         sentPacket = p;
-        return true;
     };
 
-    api.setFunction(10, 5, true);
+    EXPECT_EQ(api.setFunction(10, 5, true), SUCCESS);
 
     EXPECT_EQ(sentPacket.address, 10);
     EXPECT_EQ(sentPacket.command, SUSI_CMD_SET_FUNCTION);
@@ -26,15 +26,15 @@ TEST(SUSI_Master_API, setSpeed) {
     MockSusiHAL hal;
     SUSI_Master master(hal);
     SUSI_Master_API api(master);
+    hal.ack_result = SUCCESS;
 
     // Capture the packet that is sent
     SUSI_Packet sentPacket;
     hal.onSendPacket = [&](const SUSI_Packet& p, bool a) {
         sentPacket = p;
-        return true;
     };
 
-    api.setSpeed(10, 100, false);
+    EXPECT_EQ(api.setSpeed(10, 100, false), SUCCESS);
 
     EXPECT_EQ(sentPacket.address, 10);
     EXPECT_EQ(sentPacket.command, SUSI_CMD_SET_SPEED);
@@ -45,15 +45,15 @@ TEST(SUSI_Master_API, writeCV) {
     MockSusiHAL hal;
     SUSI_Master master(hal);
     SUSI_Master_API api(master);
+    hal.ack_result = SUCCESS;
 
     // Capture the packets that are sent
     std::vector<SUSI_Packet> sentPackets;
     hal.onSendPacket = [&](const SUSI_Packet& p, bool a) {
         sentPackets.push_back(p);
-        return true;
     };
 
-    api.writeCV(10, 1024, 255);
+    EXPECT_EQ(api.writeCV(10, 1024, 255), SUCCESS);
 
     EXPECT_EQ(sentPackets.size(), 2);
     EXPECT_EQ(sentPackets[0].address, 10);
@@ -68,15 +68,16 @@ TEST(SUSI_Master_API, readCV) {
     MockSusiHAL hal;
     SUSI_Master master(hal);
     SUSI_Master_API api(master);
+    hal.ack_result = SUCCESS;
 
     // Capture the packets that are sent
     std::vector<SUSI_Packet> sentPackets;
     hal.onSendPacket = [&](const SUSI_Packet& p, bool a) {
         sentPackets.push_back(p);
-        return true;
     };
 
-    api.readCV(10, 1024);
+    uint8_t value;
+    EXPECT_EQ(api.readCV(10, 1024, value), SUCCESS);
 
     EXPECT_EQ(sentPackets.size(), 2);
     EXPECT_EQ(sentPackets[0].address, 10);

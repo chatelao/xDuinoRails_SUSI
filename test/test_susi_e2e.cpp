@@ -29,6 +29,7 @@ protected:
 };
 
 TEST_F(SusiE2ETest, setFunction) {
+    hal.ack_result = SUCCESS;
     hal.afterSendPacket = [&]() {
         EXPECT_TRUE(slave.available());
         SUSI_Packet received_packet = slave.read();
@@ -38,10 +39,11 @@ TEST_F(SusiE2ETest, setFunction) {
         EXPECT_TRUE(slave.getFunction(5));
     };
 
-    master_api.setFunction(SLAVE_ADDRESS, 5, true);
+    EXPECT_EQ(master_api.setFunction(SLAVE_ADDRESS, 5, true), SUCCESS);
 }
 
 TEST_F(SusiE2ETest, setSpeed) {
+    hal.ack_result = SUCCESS;
     hal.afterSendPacket = [&]() {
         EXPECT_TRUE(slave.available());
         SUSI_Packet received_packet = slave.read();
@@ -53,10 +55,11 @@ TEST_F(SusiE2ETest, setSpeed) {
         EXPECT_FALSE(slave.getDirection());
     };
 
-    master_api.setSpeed(SLAVE_ADDRESS, 100, false);
+    EXPECT_EQ(master_api.setSpeed(SLAVE_ADDRESS, 100, false), SUCCESS);
 }
 
 TEST_F(SusiE2ETest, writeCV) {
+    hal.ack_result = SUCCESS;
     int packet_count = 0;
     hal.afterSendPacket = [&]() {
         packet_count++;
@@ -81,10 +84,11 @@ TEST_F(SusiE2ETest, writeCV) {
         }
     };
 
-    master_api.writeCV(SLAVE_ADDRESS, 1, 255);
+    EXPECT_EQ(master_api.writeCV(SLAVE_ADDRESS, 1, 255), SUCCESS);
 }
 
 TEST_F(SusiE2ETest, readCV) {
+    hal.ack_result = SUCCESS;
     int packet_count = 0;
     hal.afterSendPacket = [&]() {
         packet_count++;
@@ -109,5 +113,6 @@ TEST_F(SusiE2ETest, readCV) {
         }
     };
 
-    master_api.readCV(SLAVE_ADDRESS, 1);
+    uint8_t value;
+    EXPECT_EQ(master_api.readCV(SLAVE_ADDRESS, 1, value), SUCCESS);
 }

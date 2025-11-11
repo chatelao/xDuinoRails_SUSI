@@ -34,7 +34,7 @@ To ensure a robust and testable library, the following principles should be foll
 - [x] **[RCN600-M4]** Implement helper functions to encode and send standard SUSI commands as defined in RCN-600.
 - [x] **[M6]** Create a high-level API for sending commands to a specific slave address.
 - [x] **[M9]** Implement state management for the master (e.g., tracking last command, waiting for response).
-- [ ] **[M14]** Add error handling for timeouts or invalid responses from a slave.
+- [x] **[M14]** Add error handling for timeouts or invalid responses from a slave.
 
 ### Slave (Module) Role
 

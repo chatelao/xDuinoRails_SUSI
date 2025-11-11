@@ -111,7 +111,7 @@ bool SUSI_Master_API::getFunction(uint8_t address, uint8_t function) {
     return false;
 }
 
-bool SUSI_Master_API::setFunction(uint8_t address, uint8_t function, bool on) {
+SusiMasterResult SUSI_Master_API::setFunction(uint8_t address, uint8_t function, bool on) {
     SUSI_Packet packet;
     packet.address = address;
     packet.command = SUSI_CMD_SET_FUNCTION;
@@ -119,7 +119,7 @@ bool SUSI_Master_API::setFunction(uint8_t address, uint8_t function, bool on) {
     SusiMasterResult result = _master.sendPacket(packet, true);
 
     if (result != SUCCESS) {
-        return false;
+        return result;
     }
 
     // Find existing slave state
@@ -140,7 +140,7 @@ bool SUSI_Master_API::setFunction(uint8_t address, uint8_t function, bool on) {
             _slave_count++;
         } else {
             // Cannot store state for new slave, but command was successful
-            return true;
+            return SUCCESS;
         }
     }
 
@@ -151,51 +151,57 @@ bool SUSI_Master_API::setFunction(uint8_t address, uint8_t function, bool on) {
         state->functions &= ~(1L << function);
     }
 
-    return true;
+    return SUCCESS;
 }
 
-bool SUSI_Master_API::setSpeed(uint8_t address, uint8_t speed, bool forward) {
+SusiMasterResult SUSI_Master_API::setSpeed(uint8_t address, uint8_t speed, bool forward) {
     SUSI_Packet packet;
     packet.address = address;
     packet.command = SUSI_CMD_SET_SPEED;
     packet.data = (speed & 0x7F) | (forward ? 0x80 : 0x00);
-    return _master.sendPacket(packet, true) == SUCCESS;
+    return _master.sendPacket(packet, true);
 }
 
-bool SUSI_Master_API::writeCV(uint8_t address, uint16_t cv, uint8_t value) {
+SusiMasterResult SUSI_Master_API::writeCV(uint8_t address, uint16_t cv, uint8_t value) {
     uint16_t cv_addr = cv - 1;
     SUSI_Packet packet1;
     packet1.address = address;
     packet1.command = SUSI_CMD_WRITE_CV;
     packet1.data = (cv_addr >> 8) & 0x03;
-    if (_master.sendPacket(packet1, true) != SUCCESS) {
-        return false;
+    SusiMasterResult result = _master.sendPacket(packet1, true);
+    if (result != SUCCESS) {
+        return result;
     }
 
     SUSI_Packet packet2;
     packet2.address = address;
     packet2.command = cv_addr & 0xFF;
     packet2.data = value;
-    return _master.sendPacket(packet2, true) == SUCCESS;
+    return _master.sendPacket(packet2, true);
 }
 
-uint8_t SUSI_Master_API::readCV(uint8_t address, uint16_t cv) {
+SusiMasterResult SUSI_Master_API::readCV(uint8_t address, uint16_t cv, uint8_t& value) {
     uint16_t cv_addr = cv - 1;
     SUSI_Packet packet1;
     packet1.address = address;
     packet1.command = SUSI_CMD_READ_CV;
     packet1.data = (cv_addr >> 8) & 0x03;
-    if (_master.sendPacket(packet1, true) != SUCCESS) {
-        return 0;
+    SusiMasterResult result = _master.sendPacket(packet1, true);
+    if (result != SUCCESS) {
+        value = 0;
+        return result;
     }
 
     SUSI_Packet packet2;
     packet2.address = address;
     packet2.command = cv_addr & 0xFF;
     packet2.data = 0;
-    if (_master.sendPacket(packet2, true) != SUCCESS) {
-        return 0;
+    result = _master.sendPacket(packet2, true);
+    if (result != SUCCESS) {
+        value = 0;
+        return result;
     }
 
-    return _master.readByteAfterRequest();
+    value = _master.readByteAfterRequest();
+    return SUCCESS;
 }

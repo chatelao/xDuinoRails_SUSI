@@ -34,11 +34,11 @@ public:
     void begin();
     void reset();
 
-    bool setFunction(uint8_t address, uint8_t function, bool on);
+    SusiMasterResult setFunction(uint8_t address, uint8_t function, bool on);
     bool getFunction(uint8_t address, uint8_t function);
-    bool setSpeed(uint8_t address, uint8_t speed, bool forward);
-    bool writeCV(uint8_t address, uint16_t cv, uint8_t value);
-    uint8_t readCV(uint8_t address, uint16_t cv);
+    SusiMasterResult setSpeed(uint8_t address, uint8_t speed, bool forward);
+    SusiMasterResult writeCV(uint8_t address, uint16_t cv, uint8_t value);
+    SusiMasterResult readCV(uint8_t address, uint16_t cv, uint8_t& value);
 
 private:
     SUSI_Master _master;
