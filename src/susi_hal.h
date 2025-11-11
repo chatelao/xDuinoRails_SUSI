@@ -2,6 +2,7 @@
 #define SUSI_HAL_H
 
 #include <Arduino.h>
+#include "susi_response.h"
 
 class SusiHAL {
 public:
@@ -15,7 +16,7 @@ public:
     virtual void set_data_low();
     virtual bool read_data();
     virtual bool read_bit();
-    virtual bool waitForAck();
+    virtual SusiMasterResult waitForAck();
     virtual void sendAckPulse();
     virtual void sendByte(uint8_t byte);
 

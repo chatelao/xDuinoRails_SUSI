@@ -1,4 +1,5 @@
 #include "susi_hal.h"
+#include "susi_response.h"
 
 SusiHAL::SusiHAL(uint8_t clock_pin, uint8_t data_pin) {
     _clock_pin = clock_pin;
@@ -49,13 +50,13 @@ bool SusiHAL::read_bit() {
     return value;
 }
 
-bool SusiHAL::waitForAck() {
+SusiMasterResult SusiHAL::waitForAck() {
     unsigned long start_time = millis();
 
     // Wait for the data line to go LOW (start of ACK)
     while (read_data()) {
         if (millis() - start_time > 20) {
-            return false; // Timeout
+            return TIMEOUT;
         }
     }
 
@@ -64,7 +65,7 @@ bool SusiHAL::waitForAck() {
     // Wait for the data line to go HIGH again (end of ACK)
     while (!read_data()) {
         if (millis() - start_time > 20) {
-            return false; // Timeout
+            return TIMEOUT;
         }
     }
 
@@ -72,10 +73,10 @@ bool SusiHAL::waitForAck() {
 
     // Check if the pulse duration is within the valid range (0.5ms to 7ms)
     if (pulse_duration >= 500 && pulse_duration <= 7000) {
-        return true;
+        return SUCCESS;
     }
 
-    return false;
+    return INVALID_ACK;
 }
 
 void SusiHAL::sendAckPulse() {

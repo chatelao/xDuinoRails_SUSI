@@ -3,14 +3,16 @@
 
 #include "susi_hal.h"
 #include "susi_packet.h"
+#include "susi_response.h"
 #include <functional>
 
 class MockSusiHAL : public SusiHAL {
 public:
     MockSusiHAL() : SusiHAL(0, 0) {}
 
-    std::function<bool(const SUSI_Packet&, bool)> onSendPacket;
+    std::function<void(const SUSI_Packet&, bool)> onSendPacket;
     std::function<void()> afterSendPacket;
+    SusiMasterResult ack_result = SUCCESS;
     uint8_t last_sent_byte;
 
     void sendByte(uint8_t byte) override { last_sent_byte = byte; }
@@ -22,7 +24,7 @@ public:
     void set_data_low() override {}
     bool read_data() override { return false; }
     bool read_bit() override { return false; }
-    bool waitForAck() override { return true; }
+    SusiMasterResult waitForAck() override { return ack_result; }
     void sendAckPulse() override {}
 };
 
