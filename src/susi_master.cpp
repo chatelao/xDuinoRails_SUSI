@@ -92,6 +92,7 @@ uint8_t SUSI_Master::readByteAfterRequest() {
 // SUSI_Master_API implementation
 SUSI_Master_API::SUSI_Master_API(SUSI_Master& master) : _master(master) {
     _slave_count = 0;
+    _bidi_slave_count = 0;
 }
 
 void SUSI_Master_API::begin() {
@@ -100,6 +101,7 @@ void SUSI_Master_API::begin() {
 
 void SUSI_Master_API::reset() {
     _slave_count = 0;
+    _bidi_slave_count = 0;
 }
 
 bool SUSI_Master_API::getFunction(uint8_t address, uint8_t function) {
@@ -162,6 +164,16 @@ SusiMasterResult SUSI_Master_API::setSpeed(uint8_t address, uint8_t speed, bool 
     return _master.sendPacket(packet, true);
 }
 
+bool SUSI_Master_API::getUniqueId(uint8_t address, uint32_t& unique_id) {
+    for (int i = 0; i < _bidi_slave_count; i++) {
+        if (_bidi_slaves[i].address == address) {
+            unique_id = _bidi_slaves[i].unique_id;
+            return true;
+        }
+    }
+    return false;
+}
+
 SusiMasterResult SUSI_Master_API::writeCV(uint8_t address, uint16_t cv, uint8_t value) {
     uint16_t cv_addr = cv - 1;
     SUSI_Packet packet1;
@@ -207,9 +219,34 @@ SusiMasterResult SUSI_Master_API::readCV(uint8_t address, uint16_t cv, uint8_t& 
 }
 
 SusiMasterResult SUSI_Master_API::enableBidirectionalMode(uint8_t address) {
+    for (int i = 0; i < _bidi_slave_count; i++) {
+        if (_bidi_slaves[i].address == address) {
+            return SLAVE_ALREADY_EXISTS;
+        }
+    }
+
+    if (_bidi_slave_count >= MAX_SLAVES) {
+        return SLAVE_LIST_FULL;
+    }
+
     SUSI_Packet packet;
     packet.address = address;
     packet.command = SUSI_CMD_BIDIRECTIONAL_REQUEST;
     packet.data = 0;
-    return _master.sendPacket(packet, true);
+
+    SusiMasterResult result = _master.sendPacket(packet, true);
+    if (result != SUCCESS) {
+        return result;
+    }
+
+    uint32_t unique_id = 0;
+    for (int i = 0; i < 4; i++) {
+        unique_id |= (uint32_t)_master.readByteAfterRequest() << (i * 8);
+    }
+
+    _bidi_slaves[_bidi_slave_count].address = address;
+    _bidi_slaves[_bidi_slave_count].unique_id = unique_id;
+    _bidi_slave_count++;
+
+    return SUCCESS;
 }

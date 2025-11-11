@@ -8,7 +8,8 @@ const uint8_t DATA_PIN = 3;
 const uint8_t SLAVE_ADDRESS = 1;
 
 // Create a SUSI_Slave instance
-SUSI_Slave susi(CLOCK_PIN, DATA_PIN);
+const uint32_t SLAVE_UNIQUE_ID = 0x12345678;
+SUSI_Slave susi(CLOCK_PIN, DATA_PIN, SLAVE_UNIQUE_ID);
 
 void setup() {
   Serial.begin(9600);

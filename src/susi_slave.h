@@ -11,7 +11,7 @@ typedef void (*FunctionCallback)(uint8_t, bool);
 
 class SUSI_Slave {
 public:
-    SUSI_Slave(uint8_t clockPin, uint8_t dataPin);
+    SUSI_Slave(uint8_t clockPin, uint8_t dataPin, uint32_t unique_id);
     void begin(uint8_t address);
     bool available();
     SUSI_Packet read();
@@ -48,6 +48,7 @@ private:
     uint8_t _cv_values[MAX_CVS];
     uint8_t _cv_count;
     bool _bidirectional_mode;
+    uint32_t _unique_id;
     FunctionCallback _function_callback;
 };
 

@@ -3,7 +3,8 @@
 
 static SUSI_Slave*_susi_slave_instance = nullptr;
 
-SUSI_Slave::SUSI_Slave(uint8_t clockPin, uint8_t dataPin) : _hal(clockPin, dataPin) {
+SUSI_Slave::SUSI_Slave(uint8_t clockPin, uint8_t dataPin, uint32_t unique_id) : _hal(clockPin, dataPin) {
+    _unique_id = unique_id;
     _packetReady = false;
     _bitCount = 0;
     _last_bit_time_us = 0;
@@ -83,6 +84,9 @@ SUSI_Packet SUSI_Slave::read() {
             case SUSI_CMD_BIDIRECTIONAL_REQUEST:
                 _bidirectional_mode = true;
                 _hal.sendAck();
+                for (int i = 0; i < 4; i++) {
+                    _hal.sendByte((_unique_id >> (i * 8)) & 0xFF);
+                }
                 break;
             default:
                 if (_cv_bank != 0) {
