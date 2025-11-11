@@ -205,8 +205,9 @@ protected:
     const uint8_t CLOCK_PIN = 2;
     const uint8_t DATA_PIN = 3;
     const uint8_t SLAVE_ADDRESS = 5;
+    const uint32_t SLAVE_UNIQUE_ID = 0x12345678;
 
-    SUSISlaveTest() : slave(CLOCK_PIN, DATA_PIN) {}
+    SUSISlaveTest() : slave(CLOCK_PIN, DATA_PIN, SLAVE_UNIQUE_ID) {}
 
     void SetUp() override {
         mock_hal_reset();

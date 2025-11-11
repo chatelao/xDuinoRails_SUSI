@@ -87,3 +87,40 @@ TEST(SUSI_Master_API, readCV) {
     EXPECT_EQ(sentPackets[1].command, 0xFF); // CV 1024 is 255 in bank 3
     EXPECT_EQ(sentPackets[1].data, 0);
 }
+
+TEST(SUSI_Master_API, getUniqueId) {
+    MockSusiHAL hal;
+    SUSI_Master master(hal);
+    SUSI_Master_API api(master);
+    hal.ack_result = SUCCESS;
+
+    // Simulate a successful handshake
+    EXPECT_EQ(api.enableBidirectionalMode(10), SUCCESS);
+
+    uint32_t unique_id;
+    EXPECT_TRUE(api.getUniqueId(10, unique_id));
+    EXPECT_FALSE(api.getUniqueId(11, unique_id));
+}
+
+TEST(SUSI_Master_API, enableBidirectionalMode_alreadyExists) {
+    MockSusiHAL hal;
+    SUSI_Master master(hal);
+    SUSI_Master_API api(master);
+    hal.ack_result = SUCCESS;
+
+    EXPECT_EQ(api.enableBidirectionalMode(10), SUCCESS);
+    EXPECT_EQ(api.enableBidirectionalMode(10), SLAVE_ALREADY_EXISTS);
+}
+
+TEST(SUSI_Master_API, enableBidirectionalMode_listFull) {
+    MockSusiHAL hal;
+    SUSI_Master master(hal);
+    SUSI_Master_API api(master);
+    hal.ack_result = SUCCESS;
+
+    for (int i = 0; i < MAX_SLAVES; i++) {
+        EXPECT_EQ(api.enableBidirectionalMode(i), SUCCESS);
+    }
+
+    EXPECT_EQ(api.enableBidirectionalMode(MAX_SLAVES), SLAVE_LIST_FULL);
+}

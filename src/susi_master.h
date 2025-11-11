@@ -28,6 +28,11 @@ struct SUSI_Slave_State {
     uint32_t functions;
 };
 
+struct SUSI_Bidi_Slave {
+    uint8_t address;
+    uint32_t unique_id;
+};
+
 class SUSI_Master_API {
 public:
     SUSI_Master_API(SUSI_Master& master);
@@ -40,11 +45,14 @@ public:
     SusiMasterResult writeCV(uint8_t address, uint16_t cv, uint8_t value);
     SusiMasterResult readCV(uint8_t address, uint16_t cv, uint8_t& value);
     SusiMasterResult enableBidirectionalMode(uint8_t address);
+    bool getUniqueId(uint8_t address, uint32_t& unique_id);
 
 private:
     SUSI_Master _master;
     SUSI_Slave_State _slave_states[MAX_SLAVES];
     uint8_t _slave_count;
+    SUSI_Bidi_Slave _bidi_slaves[MAX_SLAVES];
+    uint8_t _bidi_slave_count;
 };
 
 #endif // SUSI_MASTER_H

@@ -11,13 +11,14 @@ protected:
     const uint8_t CLOCK_PIN = 2;
     const uint8_t DATA_PIN = 3;
     const uint8_t SLAVE_ADDRESS = 5;
+    const uint32_t SLAVE_UNIQUE_ID = 0x12345678;
 
     MockSusiHAL hal;
     SUSI_Master master;
     SUSI_Master_API master_api;
     SUSI_Slave slave;
 
-    SusiE2ETest() : hal(), master(hal), master_api(master), slave(CLOCK_PIN, DATA_PIN) {}
+    SusiE2ETest() : hal(), master(hal), master_api(master), slave(CLOCK_PIN, DATA_PIN, SLAVE_UNIQUE_ID) {}
 
     void SetUp() override {
         mock_hal_reset();
@@ -115,4 +116,17 @@ TEST_F(SusiE2ETest, readCV) {
 
     uint8_t value;
     EXPECT_EQ(master_api.readCV(SLAVE_ADDRESS, 1, value), SUCCESS);
+}
+
+TEST_F(SusiE2ETest, bidirectionalHandshake) {
+    hal.ack_result = SUCCESS;
+    hal.afterSendPacket = [&]() {
+        EXPECT_TRUE(slave.available());
+        SUSI_Packet received_packet = slave.read();
+        EXPECT_EQ(received_packet.address, SLAVE_ADDRESS);
+        EXPECT_EQ(received_packet.command, SUSI_CMD_BIDIRECTIONAL_REQUEST);
+        EXPECT_TRUE(slave.isBidirectionalModeEnabled());
+    };
+
+    EXPECT_EQ(master_api.enableBidirectionalMode(SLAVE_ADDRESS), SUCCESS);
 }

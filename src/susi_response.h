@@ -4,7 +4,9 @@
 enum SusiMasterResult {
     SUCCESS,
     TIMEOUT,
-    INVALID_ACK
+    INVALID_ACK,
+    SLAVE_ALREADY_EXISTS,
+    SLAVE_LIST_FULL
 };
 
 #endif // SUSI_RESPONSE_H
