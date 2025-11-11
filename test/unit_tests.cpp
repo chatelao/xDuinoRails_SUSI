@@ -181,6 +181,24 @@ TEST_F(SUSIMasterAPITest, SetFunction_Error) {
     EXPECT_EQ(api.setFunction(10, 5, true), INVALID_ACK);
 }
 
+TEST_F(SUSIMasterAPITest, EnableBidirectionalMode) {
+    SUSI_Packet sentPacket;
+    bool ackExpected = false;
+    mock_hal.onSendPacket = [&](const SUSI_Packet& p, bool expectAck) {
+        sentPacket = p;
+        ackExpected = expectAck;
+    };
+
+    mock_hal.ack_result = SUCCESS;
+    SusiMasterResult result = api.enableBidirectionalMode(10);
+
+    EXPECT_EQ(result, SUCCESS);
+    EXPECT_EQ(sentPacket.address, 10);
+    EXPECT_EQ(sentPacket.command, SUSI_CMD_BIDIRECTIONAL_REQUEST);
+    EXPECT_EQ(sentPacket.data, 0);
+    EXPECT_TRUE(ackExpected);
+}
+
 
 class SUSISlaveTest : public ::testing::Test {
 protected:
@@ -392,4 +410,30 @@ TEST_F(SUSISlaveTest, FunctionCallback) {
     EXPECT_TRUE(callback_fired);
     EXPECT_EQ(callback_function, 10);
     EXPECT_FALSE(callback_on);
+}
+
+TEST_F(SUSISlaveTest, EnableBidirectionalMode) {
+    EXPECT_FALSE(slave.isBidirectionalModeEnabled());
+
+    // Simulate a bidirectional request packet
+    digitalWrite(DATA_PIN, LOW); // Start bit
+    digitalWrite(CLOCK_PIN, LOW);
+    digitalWrite(CLOCK_PIN, HIGH);
+
+    uint8_t packet_bytes[3] = {SLAVE_ADDRESS, SUSI_CMD_BIDIRECTIONAL_REQUEST, 0};
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 8; ++j) {
+            digitalWrite(DATA_PIN, (packet_bytes[i] >> j) & 0x01);
+            digitalWrite(CLOCK_PIN, LOW);
+            digitalWrite(CLOCK_PIN, HIGH);
+        }
+    }
+
+    digitalWrite(DATA_PIN, HIGH); // Stop bit
+    digitalWrite(CLOCK_PIN, LOW);
+    digitalWrite(CLOCK_PIN, HIGH);
+
+    slave.read(); // Process the packet
+
+    EXPECT_TRUE(slave.isBidirectionalModeEnabled());
 }

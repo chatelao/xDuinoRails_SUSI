@@ -17,7 +17,7 @@ public:
     virtual bool read_data();
     virtual bool read_bit();
     virtual SusiMasterResult waitForAck();
-    virtual void sendAckPulse();
+    virtual void sendAck();
     virtual void sendByte(uint8_t byte);
 
     uint8_t get_clock_pin() const { return _clock_pin; }

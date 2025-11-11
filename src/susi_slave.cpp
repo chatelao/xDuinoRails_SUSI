@@ -18,6 +18,7 @@ SUSI_Slave::SUSI_Slave(uint8_t clockPin, uint8_t dataPin) : _hal(clockPin, dataP
     _cv_count = 0;
     _cv_address = 0;
     _cv_read_mode = false;
+    _bidirectional_mode = false;
     _function_callback = nullptr;
 }
 
@@ -52,7 +53,7 @@ SUSI_Packet SUSI_Slave::read() {
             case SUSI_CMD_SET_SPEED:
                 _speed = packet.data & 0x7F;
                 _forward = (packet.data & 0x80) != 0;
-                _hal.sendAckPulse();
+                _hal.sendAck();
                 break;
             case SUSI_CMD_SET_FUNCTION:
                 {
@@ -66,18 +67,22 @@ SUSI_Packet SUSI_Slave::read() {
                     if (_function_callback != nullptr) {
                         _function_callback(function, on);
                     }
-                    _hal.sendAckPulse();
+                    _hal.sendAck();
                 }
                 break;
             case SUSI_CMD_WRITE_CV:
                 _cv_bank = packet.data + 1;
                 _cv_read_mode = false;
-                _hal.sendAckPulse();
+                _hal.sendAck();
                 break;
             case SUSI_CMD_READ_CV:
                 _cv_bank = packet.data + 1;
                 _cv_read_mode = true;
-                _hal.sendAckPulse();
+                _hal.sendAck();
+                break;
+            case SUSI_CMD_BIDIRECTIONAL_REQUEST:
+                _bidirectional_mode = true;
+                _hal.sendAck();
                 break;
             default:
                 if (_cv_bank != 0) {
