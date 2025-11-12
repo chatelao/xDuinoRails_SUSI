@@ -65,10 +65,14 @@ SusiMasterResult SUSI_Master::sendPacket(const SUSI_Packet& packet, bool expectA
     return SUCCESS;
 }
 
+SusiMasterResult SUSI_Master_API::registerBiDiSlave(uint8_t address) {
+    return _add_bidi_slave(address);
+}
+
 void SUSI_Master_API::pollSlaves() {
     for (int i = 0; i < _bidi_slave_count; i++) {
         SUSI_Packet packet;
-        packet.address = _bidi_slaves[i].address;
+        packet.address = 0;
         packet.command = SUSI_CMD_BIDI_HOST_CALL;
         packet.data = _bidi_slaves[i].address;
 
@@ -206,17 +210,28 @@ SusiMasterResult SUSI_Master_API::performHandshake() {
             }
 
             if (response[0] == SUSI_MSG_BIDI_IDLE && response[2] == SUSI_MSG_BIDI_IDLE) {
-                if (_bidi_slave_count < MAX_SLAVES) {
-                    _bidi_slaves[_bidi_slave_count].address = i;
-                    _bidi_slave_count++;
-                } else {
-                    return SLAVE_LIST_FULL;
-                }
+                _add_bidi_slave(i);
             }
         }
     }
 
     return SUCCESS;
+}
+
+SusiMasterResult SUSI_Master_API::_add_bidi_slave(uint8_t address) {
+    for (int i = 0; i < _bidi_slave_count; i++) {
+        if (_bidi_slaves[i].address == address) {
+            return SLAVE_ALREADY_EXISTS;
+        }
+    }
+
+    if (_bidi_slave_count < MAX_SLAVES) {
+        _bidi_slaves[_bidi_slave_count].address = address;
+        _bidi_slave_count++;
+        return SUCCESS;
+    } else {
+        return SLAVE_LIST_FULL;
+    }
 }
 
 SusiMasterResult SUSI_Master_API::writeCV(uint8_t address, uint16_t cv, uint8_t value) {

@@ -160,12 +160,30 @@ public:
     typedef void (*BidiResponseCallback)(uint8_t address, uint8_t* data);
 
     /**
+     * @brief Registers a bidirectional slave.
+     * @param address The address of the slave.
+     * @return SusiMasterResult The result of the operation.
+     * @see RCN-601
+     */
+    SusiMasterResult registerBiDiSlave(uint8_t address);
+
+    /**
      * @brief Sets the callback function for bidirectional responses.
      * @param callback The callback function.
      */
     void onBidiResponse(BidiResponseCallback callback);
 
+#ifdef TESTING
+    /**
+     * @brief Gets the number of registered bidirectional slaves.
+     * @return uint8_t The number of registered bidirectional slaves.
+     */
+    uint8_t getBidiSlaveCount() const { return _bidi_slave_count; }
+#endif
+
 private:
+    SusiMasterResult _add_bidi_slave(uint8_t address);
+
     SUSI_Master& _master;
     SUSI_Slave_State _slave_states[MAX_SLAVES];
     uint8_t _slave_count;

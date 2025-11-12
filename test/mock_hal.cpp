@@ -32,7 +32,9 @@ void digitalWrite(uint8_t pin, uint8_t val) {
     // Check for a falling edge to trigger an ISR
     if (pin_states.count(pin) && pin_states[pin] == HIGH && val == LOW) {
         if (isr_map.count(pin) && isr_mode_map[pin] == FALLING) {
-            isr_map[pin]();
+            if (isr_map[pin] != nullptr) {
+                isr_map[pin]();
+            }
         }
     }
 
