@@ -27,9 +27,8 @@ public:
     /**
      * @brief Constructs a new SUSI_Slave object.
      * @param hal A reference to a SusiHAL object that provides the hardware abstraction.
-     * @param unique_id The unique ID of the slave.
      */
-    SUSI_Slave(SusiHAL& hal, uint32_t unique_id);
+    SUSI_Slave(SusiHAL& hal);
 
     /**
      * @brief Initializes the SUSI slave.
@@ -116,7 +115,6 @@ private:
     uint8_t _cv_values[MAX_CVS];
     uint8_t _cv_count;
     bool _bidirectional_mode;
-    uint32_t _unique_id;
     FunctionCallback _function_callback;
 };
 

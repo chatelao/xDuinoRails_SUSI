@@ -8,9 +8,10 @@
  */
 
 /**
- * @brief The SUSI command to set a function.
+ * @brief The SUSI command to set a function (Function Group 1).
+ * @see RCN-600
  */
-const uint8_t SUSI_CMD_SET_FUNCTION = 0x01;
+const uint8_t SUSI_CMD_SET_FUNCTION = 0x60;
 
 /**
  * @brief The SUSI command to set the speed.
@@ -28,13 +29,15 @@ const uint8_t SUSI_CMD_WRITE_CV = 0x04;
 const uint8_t SUSI_CMD_READ_CV = 0x03;
 
 /**
- * @brief The SUSI command to request bidirectional communication.
+ * @brief The SUSI command for a BiDi Host Call.
+ * @see RCN-601
  */
-const uint8_t SUSI_CMD_BIDIRECTIONAL_REQUEST = 0x05;
+const uint8_t SUSI_CMD_BIDI_HOST_CALL = 0x01;
 
 /**
- * @brief The SUSI command to poll a bidirectional slave.
+ * @brief The SUSI response message for a BiDi idle state.
+ * @see RCN-601
  */
-const uint8_t SUSI_CMD_BIDIRECTIONAL_POLL = 0x06;
+const uint8_t SUSI_MSG_BIDI_IDLE = 0x8A;
 
 #endif // SUSI_COMMANDS_H

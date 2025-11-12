@@ -66,7 +66,6 @@ struct SUSI_Slave_State {
  */
 struct SUSI_Bidi_Slave {
     uint8_t address;
-    uint32_t unique_id;
 };
 
 /**
@@ -141,21 +140,11 @@ public:
     SusiMasterResult readCV(uint8_t address, uint16_t cv, uint8_t& value);
 
     /**
-     * @brief Enables bidirectional communication with a SUSI slave device.
-     * @param address The address of the slave.
+     * @brief Performs the handshake to detect and register bidirectional slaves.
      * @return SusiMasterResult A result code indicating the status of the operation.
      * @see RCN-601
      */
-    SusiMasterResult enableBidirectionalMode(uint8_t address);
-
-    /**
-     * @brief Gets the unique ID of a SUSI slave device.
-     * @param address The address of the slave.
-     * @param unique_id A reference to a 32-bit integer to store the unique ID in.
-     * @return bool Whether the unique ID was successfully retrieved.
-     * @see RCN-601
-     */
-    bool getUniqueId(uint8_t address, uint32_t& unique_id);
+    SusiMasterResult performHandshake();
 
     /**
      * @brief Polls all registered bidirectional slaves.

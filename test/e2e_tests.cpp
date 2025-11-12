@@ -10,14 +10,13 @@ protected:
     const uint8_t CLOCK_PIN = 2;
     const uint8_t DATA_PIN = 3;
     const uint8_t SLAVE_ADDRESS = 5;
-    const uint32_t SLAVE_UNIQUE_ID = 0x12345678;
 
     SusiHAL hal;
     SUSI_Master master;
     SUSI_Master_API api;
     SUSI_Slave slave;
 
-    EndToEndTest() : hal(CLOCK_PIN, DATA_PIN), master(hal), api(master), slave(hal, SLAVE_UNIQUE_ID) {}
+    EndToEndTest() : hal(CLOCK_PIN, DATA_PIN), master(hal), api(master), slave(hal) {}
 
     void SetUp() override {
         mock_hal_reset();
