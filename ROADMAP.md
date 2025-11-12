@@ -107,10 +107,10 @@ To ensure a robust and testable library, the following principles should be foll
 
 ## 5. Examples and Finalization
 
-- [ ] Create a "Master" example sketch demonstrating key features.
-- [ ] Create a "Slave" example sketch demonstrating key features.
-- [ ] Write comprehensive documentation for the library's public API.
-- [ ] Add a "Getting Started" guide to the main `README.md`.
+- [x] Create a "Master" example sketch demonstrating key features.
+- [x] Create a "Slave" example sketch demonstrating key features.
+- [x] Write comprehensive documentation for the library's public API.
+- [x] Add a "Getting Started" guide to the main `README.md`.
 
 ## 6. Testing & CI
 
