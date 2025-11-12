@@ -207,15 +207,16 @@ protected:
     const uint8_t SLAVE_ADDRESS = 5;
     const uint32_t SLAVE_UNIQUE_ID = 0x12345678;
 
-    SUSISlaveTest() : slave(CLOCK_PIN, DATA_PIN, SLAVE_UNIQUE_ID) {}
+    SusiHAL hal;
+    SUSI_Slave slave;
+
+    SUSISlaveTest() : hal(CLOCK_PIN, DATA_PIN), slave(hal, SLAVE_UNIQUE_ID) {}
 
     void SetUp() override {
         mock_hal_reset();
         slave.begin(SLAVE_ADDRESS);
         digitalWrite(CLOCK_PIN, HIGH); // Set initial clock state
     }
-
-    SUSI_Slave slave;
 };
 
 TEST_F(SUSISlaveTest, Initialization) {

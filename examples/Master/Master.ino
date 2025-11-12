@@ -78,4 +78,9 @@ void loop() {
     Serial.println(cvValue);
   }
   delay(2000);
+
+  // Example: Poll for bidirectional data
+  Serial.println("Polling for bidirectional data...");
+  susi.pollSlaves();
+  delay(2000);
 }

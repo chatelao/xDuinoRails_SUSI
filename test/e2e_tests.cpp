@@ -14,14 +14,14 @@ protected:
 
     SusiHAL hal;
     SUSI_Master master;
-    SUSI_Master_API master_api;
+    SUSI_Master_API api;
     SUSI_Slave slave;
 
-    EndToEndTest() : hal(CLOCK_PIN, DATA_PIN), master(hal), master_api(master), slave(CLOCK_PIN, DATA_PIN, SLAVE_UNIQUE_ID) {}
+    EndToEndTest() : hal(CLOCK_PIN, DATA_PIN), master(hal), api(master), slave(hal, SLAVE_UNIQUE_ID) {}
 
     void SetUp() override {
         mock_hal_reset();
-        master_api.begin();
+        api.begin();
         slave.begin(SLAVE_ADDRESS);
         // Set initial clock state to HIGH
         digitalWrite(CLOCK_PIN, HIGH);
@@ -31,7 +31,7 @@ protected:
 TEST_F(EndToEndTest, TrueEndToEnd_SendAndReceiveSetSpeedPacket) {
     // The master's sendPacket will now automatically trigger the slave's
     // interrupt handler via the enhanced mock HAL.
-    master_api.setSpeed(SLAVE_ADDRESS, 100, true);
+    api.setSpeed(SLAVE_ADDRESS, 100, true);
 
     EXPECT_TRUE(slave.available());
     SUSI_Packet received_packet = slave.read();

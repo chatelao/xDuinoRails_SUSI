@@ -28,11 +28,11 @@ SusiMasterResult SUSI_Master::sendPacket(const SUSI_Packet& packet, bool expectA
     if (mock_hal) {
         if (mock_hal->onSendPacket) {
             mock_hal->onSendPacket(packet, expectAck);
-            if (mock_hal->afterSendPacket) {
-                mock_hal->afterSendPacket();
-            }
-            return mock_hal->ack_result;
         }
+        if (mock_hal->afterSendPacket) {
+            mock_hal->afterSendPacket();
+        }
+        return mock_hal->ack_result;
     }
 #endif
     unsigned long current_time_ms = millis();
@@ -65,6 +65,30 @@ SusiMasterResult SUSI_Master::sendPacket(const SUSI_Packet& packet, bool expectA
     return SUCCESS;
 }
 
+void SUSI_Master_API::pollSlaves() {
+    for (int i = 0; i < _bidi_slave_count; i++) {
+        SUSI_Packet packet;
+        packet.address = _bidi_slaves[i].address;
+        packet.command = SUSI_CMD_BIDIRECTIONAL_POLL;
+        packet.data = 0;
+
+        SusiMasterResult result = _master.sendPacket(packet, true);
+        if (result == SUCCESS) {
+            uint8_t data[4];
+            for (int j = 0; j < 4; j++) {
+                data[j] = _master.readByteAfterRequest();
+            }
+            if (_bidi_callback != nullptr) {
+                _bidi_callback(_bidi_slaves[i].address, data);
+            }
+        }
+    }
+}
+
+void SUSI_Master_API::onBidiResponse(BidiResponseCallback callback) {
+    _bidi_callback = callback;
+}
+
 void SUSI_Master::sendByte(uint8_t byte) {
     for (int i = 0; i < 8; i++) {
         if ((byte >> i) & 0x01) {
@@ -93,6 +117,7 @@ uint8_t SUSI_Master::readByteAfterRequest() {
 SUSI_Master_API::SUSI_Master_API(SUSI_Master& master) : _master(master) {
     _slave_count = 0;
     _bidi_slave_count = 0;
+    _bidi_callback = nullptr;
 }
 
 void SUSI_Master_API::begin() {
