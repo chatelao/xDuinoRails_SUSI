@@ -157,12 +157,32 @@ public:
      */
     bool getUniqueId(uint8_t address, uint32_t& unique_id);
 
+    /**
+     * @brief Polls all registered bidirectional slaves.
+     * @see RCN-601
+     */
+    void pollSlaves();
+
+    /**
+     * @brief A callback function that is called when a bidirectional response is received.
+     * @param address The address of the slave that sent the response.
+     * @param data The 4-byte response data.
+     */
+    typedef void (*BidiResponseCallback)(uint8_t address, uint8_t* data);
+
+    /**
+     * @brief Sets the callback function for bidirectional responses.
+     * @param callback The callback function.
+     */
+    void onBidiResponse(BidiResponseCallback callback);
+
 private:
-    SUSI_Master _master;
+    SUSI_Master& _master;
     SUSI_Slave_State _slave_states[MAX_SLAVES];
     uint8_t _slave_count;
     SUSI_Bidi_Slave _bidi_slaves[MAX_SLAVES];
     uint8_t _bidi_slave_count;
+    BidiResponseCallback _bidi_callback;
 };
 
 #endif // SUSI_MASTER_H

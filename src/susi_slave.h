@@ -26,11 +26,10 @@ class SUSI_Slave {
 public:
     /**
      * @brief Constructs a new SUSI_Slave object.
-     * @param clockPin The pin that the SUSI clock is connected to.
-     * @param dataPin The pin that the SUSI data is connected to.
+     * @param hal A reference to a SusiHAL object that provides the hardware abstraction.
      * @param unique_id The unique ID of the slave.
      */
-    SUSI_Slave(uint8_t clockPin, uint8_t dataPin, uint32_t unique_id);
+    SUSI_Slave(SusiHAL& hal, uint32_t unique_id);
 
     /**
      * @brief Initializes the SUSI slave.
@@ -89,6 +88,12 @@ public:
      * @return bool Whether bidirectional mode is enabled.
      */
     bool isBidirectionalModeEnabled() const { return _bidirectional_mode; }
+
+    /**
+     * @brief Test-only function to inject a packet into the slave.
+     * @param packet The packet to inject.
+     */
+    void _test_receive_packet(const SUSI_Packet& packet);
 #endif
 
 private:

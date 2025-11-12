@@ -32,4 +32,9 @@ const uint8_t SUSI_CMD_READ_CV = 0x03;
  */
 const uint8_t SUSI_CMD_BIDIRECTIONAL_REQUEST = 0x05;
 
+/**
+ * @brief The SUSI command to poll a bidirectional slave.
+ */
+const uint8_t SUSI_CMD_BIDIRECTIONAL_POLL = 0x06;
+
 #endif // SUSI_COMMANDS_H

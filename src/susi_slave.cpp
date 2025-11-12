@@ -3,7 +3,7 @@
 
 static SUSI_Slave*_susi_slave_instance = nullptr;
 
-SUSI_Slave::SUSI_Slave(uint8_t clockPin, uint8_t dataPin, uint32_t unique_id) : _hal(clockPin, dataPin) {
+SUSI_Slave::SUSI_Slave(SusiHAL& hal, uint32_t unique_id) : _hal(hal) {
     _unique_id = unique_id;
     _packetReady = false;
     _bitCount = 0;
@@ -86,6 +86,15 @@ SUSI_Packet SUSI_Slave::read() {
                 _hal.sendAck();
                 for (int i = 0; i < 4; i++) {
                     _hal.sendByte((_unique_id >> (i * 8)) & 0xFF);
+                }
+                break;
+            case SUSI_CMD_BIDIRECTIONAL_POLL:
+                if (_bidirectional_mode) {
+                    _hal.sendAck();
+                    _hal.sendByte(0xDE);
+                    _hal.sendByte(0xAD);
+                    _hal.sendByte(0xBE);
+                    _hal.sendByte(0xEF);
                 }
                 break;
             default:
@@ -182,3 +191,14 @@ void SUSI_Slave::handleClockFall() {
 
     _bitCount++;
 }
+
+#ifdef TESTING
+void SUSI_Slave::_test_receive_packet(const SUSI_Packet& packet) {
+    if (packet.address == _address) {
+        _buffer[0] = packet.address;
+        _buffer[1] = packet.command;
+        _buffer[2] = packet.data;
+        _packetReady = true;
+    }
+}
+#endif
