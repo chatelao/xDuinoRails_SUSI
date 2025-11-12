@@ -5,6 +5,9 @@
 #include "susi_hal.h"
 #include "susi_packet.h"
 
+class SUSI_Slave;
+extern SUSI_Slave* _susi_slave_instance;
+
 /**
  * @brief The maximum number of CVs that can be stored by the slave.
  */
@@ -99,7 +102,7 @@ private:
     static void onClockFall();
     void handleClockFall();
 
-    SusiHAL _hal;
+    SusiHAL& _hal;
     uint8_t _address;
     volatile bool _packetReady;
     volatile uint8_t _buffer[3];

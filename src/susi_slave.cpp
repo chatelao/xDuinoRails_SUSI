@@ -1,7 +1,7 @@
 #include "susi_slave.h"
 #include "susi_commands.h"
 
-static SUSI_Slave*_susi_slave_instance = nullptr;
+SUSI_Slave* _susi_slave_instance = nullptr;
 
 SUSI_Slave::SUSI_Slave(SusiHAL& hal) : _hal(hal) {
     _packetReady = false;
@@ -10,7 +10,6 @@ SUSI_Slave::SUSI_Slave(SusiHAL& hal) : _hal(hal) {
     _buffer[0] = 0;
     _buffer[1] = 0;
     _buffer[2] = 0;
-    _susi_slave_instance = this;
     _speed = 0;
     _forward = false;
     _functions = 0;
@@ -82,8 +81,9 @@ SUSI_Packet SUSI_Slave::read() {
                 break;
             case SUSI_CMD_BIDI_HOST_CALL:
                 {
+                    uint8_t module_number = packet.data & 0x03;
                     bool forced_response = (packet.data & 0x04) != 0;
-                    if (forced_response) {
+                    if (forced_response && module_number == _address) {
                         _bidirectional_mode = true;
                         _hal.sendAck();
                         _hal.sendByte(SUSI_MSG_BIDI_IDLE);
@@ -171,7 +171,7 @@ void SUSI_Slave::handleClockFall() {
     // The 25th bit must be a HIGH stop bit
     if (_bitCount == 25) {
         if (data) { // Stop bit is HIGH
-            if (_buffer[0] == _address) {
+            if (_buffer[0] == _address || _buffer[0] == 0) {
                 _packetReady = true;
             }
         }
@@ -197,7 +197,7 @@ void SUSI_Slave::handleClockFall() {
 
 #ifdef TESTING
 void SUSI_Slave::_test_receive_packet(const SUSI_Packet& packet) {
-    if (packet.address == _address) {
+    if (packet.address == _address || packet.address == 0) {
         _buffer[0] = packet.address;
         _buffer[1] = packet.command;
         _buffer[2] = packet.data;
