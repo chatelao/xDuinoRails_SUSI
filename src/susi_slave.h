@@ -5,26 +5,89 @@
 #include "susi_hal.h"
 #include "susi_packet.h"
 
+/**
+ * @brief The maximum number of CVs that can be stored by the slave.
+ */
 const uint8_t MAX_CVS = 32;
 
+/**
+ * @brief A callback function that is called when a function is changed.
+ * @param function The function that was changed.
+ * @param on Whether the function was turned on or off.
+ */
 typedef void (*FunctionCallback)(uint8_t, bool);
 
+/**
+ * @brief Represents a SUSI Slave device.
+ * @details This class provides the functionality for a SUSI slave device to receive and process SUSI packets from a master.
+ * @see RCN-600
+ */
 class SUSI_Slave {
 public:
+    /**
+     * @brief Constructs a new SUSI_Slave object.
+     * @param clockPin The pin that the SUSI clock is connected to.
+     * @param dataPin The pin that the SUSI data is connected to.
+     * @param unique_id The unique ID of the slave.
+     */
     SUSI_Slave(uint8_t clockPin, uint8_t dataPin, uint32_t unique_id);
+
+    /**
+     * @brief Initializes the SUSI slave.
+     * @param address The address of the slave.
+     */
     void begin(uint8_t address);
+
+    /**
+     * @brief Checks if a SUSI packet is available to be read.
+     * @return bool Whether a packet is available.
+     */
     bool available();
+
+    /**
+     * @brief Reads a SUSI packet from the slave.
+     * @return SUSI_Packet The packet that was read.
+     */
     SUSI_Packet read();
 
+    /**
+     * @brief Sets a callback function that is called when a function is changed.
+     * @param callback The callback function.
+     */
     void onFunctionChange(FunctionCallback callback);
 
 public:
+    /**
+     * @brief Gets the current speed of the slave.
+     * @return uint8_t The current speed.
+     */
     uint8_t getSpeed() const { return _speed; }
+
+    /**
+     * @brief Gets the current direction of the slave.
+     * @return bool The current direction (true for forward, false for reverse).
+     */
     bool getDirection() const { return _forward; }
+
+    /**
+     * @brief Gets the state of a function.
+     * @param function The function to get the state of.
+     * @return bool The state of the function (true for on, false for off).
+     */
     bool getFunction(uint8_t function) const { return (_functions >> function) & 1; }
+
+    /**
+     * @brief Reads the value of a CV.
+     * @param cv The CV to read.
+     * @return uint8_t The value of the CV.
+     */
     uint8_t readCV(uint16_t cv);
 
 #ifdef TESTING
+    /**
+     * @brief Checks if bidirectional mode is enabled.
+     * @return bool Whether bidirectional mode is enabled.
+     */
     bool isBidirectionalModeEnabled() const { return _bidirectional_mode; }
 #endif
 
