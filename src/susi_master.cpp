@@ -69,8 +69,8 @@ void SUSI_Master_API::pollSlaves() {
     for (int i = 0; i < _bidi_slave_count; i++) {
         SUSI_Packet packet;
         packet.address = _bidi_slaves[i].address;
-        packet.command = SUSI_CMD_BIDIRECTIONAL_POLL;
-        packet.data = 0;
+        packet.command = SUSI_CMD_BIDI_HOST_CALL;
+        packet.data = _bidi_slaves[i].address;
 
         SusiMasterResult result = _master.sendPacket(packet, true);
         if (result == SUCCESS) {
@@ -189,14 +189,34 @@ SusiMasterResult SUSI_Master_API::setSpeed(uint8_t address, uint8_t speed, bool 
     return _master.sendPacket(packet, true);
 }
 
-bool SUSI_Master_API::getUniqueId(uint8_t address, uint32_t& unique_id) {
-    for (int i = 0; i < _bidi_slave_count; i++) {
-        if (_bidi_slaves[i].address == address) {
-            unique_id = _bidi_slaves[i].unique_id;
-            return true;
+SusiMasterResult SUSI_Master_API::performHandshake() {
+    _bidi_slave_count = 0;
+
+    for (uint8_t i = 1; i <= 3; i++) {
+        SUSI_Packet packet;
+        packet.address = 0; // Broadcast address for handshake
+        packet.command = SUSI_CMD_BIDI_HOST_CALL;
+        packet.data = i | 0x04; // Module Number + Forced Response bit
+
+        SusiMasterResult result = _master.sendPacket(packet, true);
+        if (result == SUCCESS) {
+            uint8_t response[4];
+            for (int j = 0; j < 4; j++) {
+                response[j] = _master.readByteAfterRequest();
+            }
+
+            if (response[0] == SUSI_MSG_BIDI_IDLE && response[2] == SUSI_MSG_BIDI_IDLE) {
+                if (_bidi_slave_count < MAX_SLAVES) {
+                    _bidi_slaves[_bidi_slave_count].address = i;
+                    _bidi_slave_count++;
+                } else {
+                    return SLAVE_LIST_FULL;
+                }
+            }
         }
     }
-    return false;
+
+    return SUCCESS;
 }
 
 SusiMasterResult SUSI_Master_API::writeCV(uint8_t address, uint16_t cv, uint8_t value) {
@@ -243,35 +263,3 @@ SusiMasterResult SUSI_Master_API::readCV(uint8_t address, uint16_t cv, uint8_t& 
     return SUCCESS;
 }
 
-SusiMasterResult SUSI_Master_API::enableBidirectionalMode(uint8_t address) {
-    for (int i = 0; i < _bidi_slave_count; i++) {
-        if (_bidi_slaves[i].address == address) {
-            return SLAVE_ALREADY_EXISTS;
-        }
-    }
-
-    if (_bidi_slave_count >= MAX_SLAVES) {
-        return SLAVE_LIST_FULL;
-    }
-
-    SUSI_Packet packet;
-    packet.address = address;
-    packet.command = SUSI_CMD_BIDIRECTIONAL_REQUEST;
-    packet.data = 0;
-
-    SusiMasterResult result = _master.sendPacket(packet, true);
-    if (result != SUCCESS) {
-        return result;
-    }
-
-    uint32_t unique_id = 0;
-    for (int i = 0; i < 4; i++) {
-        unique_id |= (uint32_t)_master.readByteAfterRequest() << (i * 8);
-    }
-
-    _bidi_slaves[_bidi_slave_count].address = address;
-    _bidi_slaves[_bidi_slave_count].unique_id = unique_id;
-    _bidi_slave_count++;
-
-    return SUCCESS;
-}

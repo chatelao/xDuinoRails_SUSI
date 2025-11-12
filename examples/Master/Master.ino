@@ -17,20 +17,10 @@ void setup() {
 
   Serial.println("SUSI Master Example");
 
-  // Example: Enable bidirectional mode for slave address 1
-  Serial.print("Enabling bidirectional mode for slave 1");
-  SusiMasterResult result = susi.enableBidirectionalMode(1);
+  // Example: Perform handshake to find bidirectional slaves
+  Serial.print("Performing handshake");
+  SusiMasterResult result = susi.performHandshake();
   printResult(result);
-
-  if (result == SUCCESS) {
-    uint32_t unique_id;
-    if (susi.getUniqueId(1, unique_id)) {
-      Serial.print("  -> Unique ID: 0x");
-      Serial.println(unique_id, HEX);
-    } else {
-      Serial.println("  -> Failed to get unique ID");
-    }
-  }
 }
 
 void printResult(SusiMasterResult result) {

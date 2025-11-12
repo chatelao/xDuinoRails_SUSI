@@ -3,8 +3,7 @@
 
 static SUSI_Slave*_susi_slave_instance = nullptr;
 
-SUSI_Slave::SUSI_Slave(SusiHAL& hal, uint32_t unique_id) : _hal(hal) {
-    _unique_id = unique_id;
+SUSI_Slave::SUSI_Slave(SusiHAL& hal) : _hal(hal) {
     _packetReady = false;
     _bitCount = 0;
     _last_bit_time_us = 0;
@@ -81,20 +80,24 @@ SUSI_Packet SUSI_Slave::read() {
                 _cv_read_mode = true;
                 _hal.sendAck();
                 break;
-            case SUSI_CMD_BIDIRECTIONAL_REQUEST:
-                _bidirectional_mode = true;
-                _hal.sendAck();
-                for (int i = 0; i < 4; i++) {
-                    _hal.sendByte((_unique_id >> (i * 8)) & 0xFF);
-                }
-                break;
-            case SUSI_CMD_BIDIRECTIONAL_POLL:
-                if (_bidirectional_mode) {
-                    _hal.sendAck();
-                    _hal.sendByte(0xDE);
-                    _hal.sendByte(0xAD);
-                    _hal.sendByte(0xBE);
-                    _hal.sendByte(0xEF);
+            case SUSI_CMD_BIDI_HOST_CALL:
+                {
+                    bool forced_response = (packet.data & 0x04) != 0;
+                    if (forced_response) {
+                        _bidirectional_mode = true;
+                        _hal.sendAck();
+                        _hal.sendByte(SUSI_MSG_BIDI_IDLE);
+                        _hal.sendByte(0x00);
+                        _hal.sendByte(SUSI_MSG_BIDI_IDLE);
+                        _hal.sendByte(0x00);
+                    } else if (_bidirectional_mode) {
+                        _hal.sendAck();
+                        // Send a hardcoded response for now
+                        _hal.sendByte(0xDE);
+                        _hal.sendByte(0xAD);
+                        _hal.sendByte(0xBE);
+                        _hal.sendByte(0xEF);
+                    }
                 }
                 break;
             default:

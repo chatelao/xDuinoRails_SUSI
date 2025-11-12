@@ -88,39 +88,28 @@ TEST(SUSI_Master_API, readCV) {
     EXPECT_EQ(sentPackets[1].data, 0);
 }
 
-TEST(SUSI_Master_API, getUniqueId) {
+TEST(SUSI_Master_API, performHandshake) {
     MockSusiHAL hal;
     SUSI_Master master(hal);
     SUSI_Master_API api(master);
     hal.ack_result = SUCCESS;
 
-    // Simulate a successful handshake
-    EXPECT_EQ(api.enableBidirectionalMode(10), SUCCESS);
+    // Capture the packets that are sent
+    std::vector<SUSI_Packet> sentPackets;
+    hal.onSendPacket = [&](const SUSI_Packet& p, bool a) {
+        sentPackets.push_back(p);
+    };
 
-    uint32_t unique_id;
-    EXPECT_TRUE(api.getUniqueId(10, unique_id));
-    EXPECT_FALSE(api.getUniqueId(11, unique_id));
-}
+    // Simulate a successful handshake response for slave 1
+    hal.read_bytes.push(SUSI_MSG_BIDI_IDLE);
+    hal.read_bytes.push(0x00);
+    hal.read_bytes.push(SUSI_MSG_BIDI_IDLE);
+    hal.read_bytes.push(0x00);
 
-TEST(SUSI_Master_API, enableBidirectionalMode_alreadyExists) {
-    MockSusiHAL hal;
-    SUSI_Master master(hal);
-    SUSI_Master_API api(master);
-    hal.ack_result = SUCCESS;
+    EXPECT_EQ(api.performHandshake(), SUCCESS);
 
-    EXPECT_EQ(api.enableBidirectionalMode(10), SUCCESS);
-    EXPECT_EQ(api.enableBidirectionalMode(10), SLAVE_ALREADY_EXISTS);
-}
-
-TEST(SUSI_Master_API, enableBidirectionalMode_listFull) {
-    MockSusiHAL hal;
-    SUSI_Master master(hal);
-    SUSI_Master_API api(master);
-    hal.ack_result = SUCCESS;
-
-    for (int i = 0; i < MAX_SLAVES; i++) {
-        EXPECT_EQ(api.enableBidirectionalMode(i), SUCCESS);
-    }
-
-    EXPECT_EQ(api.enableBidirectionalMode(MAX_SLAVES), SLAVE_LIST_FULL);
+    EXPECT_EQ(sentPackets.size(), 3);
+    EXPECT_EQ(sentPackets[0].command, SUSI_CMD_BIDI_HOST_CALL);
+    EXPECT_EQ(sentPackets[1].command, SUSI_CMD_BIDI_HOST_CALL);
+    EXPECT_EQ(sentPackets[2].command, SUSI_CMD_BIDI_HOST_CALL);
 }

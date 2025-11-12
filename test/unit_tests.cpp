@@ -181,22 +181,28 @@ TEST_F(SUSIMasterAPITest, SetFunction_Error) {
     EXPECT_EQ(api.setFunction(10, 5, true), INVALID_ACK);
 }
 
-TEST_F(SUSIMasterAPITest, EnableBidirectionalMode) {
-    SUSI_Packet sentPacket;
-    bool ackExpected = false;
+TEST_F(SUSIMasterAPITest, PerformHandshake) {
+    std::vector<SUSI_Packet> sentPackets;
     mock_hal.onSendPacket = [&](const SUSI_Packet& p, bool expectAck) {
-        sentPacket = p;
-        ackExpected = expectAck;
+        sentPackets.push_back(p);
     };
 
     mock_hal.ack_result = SUCCESS;
-    SusiMasterResult result = api.enableBidirectionalMode(10);
+    mock_hal.read_bytes.push(SUSI_MSG_BIDI_IDLE);
+    mock_hal.read_bytes.push(0x00);
+    mock_hal.read_bytes.push(SUSI_MSG_BIDI_IDLE);
+    mock_hal.read_bytes.push(0x00);
+
+    SusiMasterResult result = api.performHandshake();
 
     EXPECT_EQ(result, SUCCESS);
-    EXPECT_EQ(sentPacket.address, 10);
-    EXPECT_EQ(sentPacket.command, SUSI_CMD_BIDIRECTIONAL_REQUEST);
-    EXPECT_EQ(sentPacket.data, 0);
-    EXPECT_TRUE(ackExpected);
+    ASSERT_EQ(sentPackets.size(), 3);
+    EXPECT_EQ(sentPackets[0].command, SUSI_CMD_BIDI_HOST_CALL);
+    EXPECT_EQ(sentPackets[0].data, 1 | 0x04);
+    EXPECT_EQ(sentPackets[1].command, SUSI_CMD_BIDI_HOST_CALL);
+    EXPECT_EQ(sentPackets[1].data, 2 | 0x04);
+    EXPECT_EQ(sentPackets[2].command, SUSI_CMD_BIDI_HOST_CALL);
+    EXPECT_EQ(sentPackets[2].data, 3 | 0x04);
 }
 
 
@@ -205,12 +211,11 @@ protected:
     const uint8_t CLOCK_PIN = 2;
     const uint8_t DATA_PIN = 3;
     const uint8_t SLAVE_ADDRESS = 5;
-    const uint32_t SLAVE_UNIQUE_ID = 0x12345678;
 
     SusiHAL hal;
     SUSI_Slave slave;
 
-    SUSISlaveTest() : hal(CLOCK_PIN, DATA_PIN), slave(hal, SLAVE_UNIQUE_ID) {}
+    SUSISlaveTest() : hal(CLOCK_PIN, DATA_PIN), slave(hal) {}
 
     void SetUp() override {
         mock_hal_reset();
@@ -414,15 +419,15 @@ TEST_F(SUSISlaveTest, FunctionCallback) {
     EXPECT_FALSE(callback_on);
 }
 
-TEST_F(SUSISlaveTest, EnableBidirectionalMode) {
+TEST_F(SUSISlaveTest, HandshakeResponse) {
     EXPECT_FALSE(slave.isBidirectionalModeEnabled());
 
-    // Simulate a bidirectional request packet
+    // Simulate a handshake request packet
     digitalWrite(DATA_PIN, LOW); // Start bit
     digitalWrite(CLOCK_PIN, LOW);
     digitalWrite(CLOCK_PIN, HIGH);
 
-    uint8_t packet_bytes[3] = {SLAVE_ADDRESS, SUSI_CMD_BIDIRECTIONAL_REQUEST, 0};
+    uint8_t packet_bytes[3] = {SLAVE_ADDRESS, SUSI_CMD_BIDI_HOST_CALL, 1 | 0x04};
     for (int i = 0; i < 3; ++i) {
         for (int j = 0; j < 8; ++j) {
             digitalWrite(DATA_PIN, (packet_bytes[i] >> j) & 0x01);

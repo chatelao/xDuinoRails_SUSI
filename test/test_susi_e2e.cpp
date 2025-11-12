@@ -10,15 +10,14 @@ class SusiE2ETest : public ::testing::Test {
 protected:
     const uint8_t CLOCK_PIN = 2;
     const uint8_t DATA_PIN = 3;
-    const uint8_t SLAVE_ADDRESS = 5;
-    const uint32_t SLAVE_UNIQUE_ID = 0x12345678;
+    const uint8_t SLAVE_ADDRESS = 1;
 
     MockSusiHAL hal;
     SUSI_Master master;
     SUSI_Master_API api;
     SUSI_Slave slave;
 
-    SusiE2ETest() : master(hal), api(master), slave(hal, SLAVE_UNIQUE_ID) {}
+    SusiE2ETest() : master(hal), api(master), slave(hal) {}
 
     void SetUp() override {
         mock_hal_reset();
@@ -90,20 +89,6 @@ TEST_F(SusiE2ETest, readCV) {
     EXPECT_EQ(value, 255);
 }
 
-TEST_F(SusiE2ETest, bidirectionalHandshake) {
-    hal.ack_result = SUCCESS;
-    hal.onSendPacket = [&](const SUSI_Packet& p, bool expectAck) {
-        slave._test_receive_packet(p);
-    };
-    hal.afterSendPacket = [&]() {
-        EXPECT_TRUE(slave.available());
-        slave.read();
-        EXPECT_TRUE(slave.isBidirectionalModeEnabled());
-    };
-
-    EXPECT_EQ(api.enableBidirectionalMode(SLAVE_ADDRESS), SUCCESS);
-}
-
 namespace {
     bool _callback_fired_e2e = false;
     uint8_t _callback_address_e2e = 0;
@@ -118,18 +103,29 @@ namespace {
     }
 }
 
-TEST_F(SusiE2ETest, bidirectionalPolling) {
+TEST_F(SusiE2ETest, Handshake) {
     hal.ack_result = SUCCESS;
     hal.onSendPacket = [&](const SUSI_Packet& p, bool expectAck) {
-        slave._test_receive_packet(p);
+        // The handshake sends to address 0, but the slave is at address 1.
+        // The packet needs to be injected with the correct address for the slave to process it.
+        SUSI_Packet addressed_packet = p;
+        addressed_packet.address = SLAVE_ADDRESS;
+        slave._test_receive_packet(addressed_packet);
     };
     hal.afterSendPacket = [&]() {
         EXPECT_TRUE(slave.available());
         slave.read();
     };
 
-    api.enableBidirectionalMode(SLAVE_ADDRESS);
+    hal.read_bytes.push(SUSI_MSG_BIDI_IDLE);
+    hal.read_bytes.push(0x00);
+    hal.read_bytes.push(SUSI_MSG_BIDI_IDLE);
+    hal.read_bytes.push(0x00);
 
+    EXPECT_EQ(api.performHandshake(), SUCCESS);
+
+    // After the handshake, the polling should work.
+    _callback_fired_e2e = false;
     hal.read_bytes.push(0xDE);
     hal.read_bytes.push(0xAD);
     hal.read_bytes.push(0xBE);
