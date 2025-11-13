@@ -163,6 +163,10 @@ TEST_F(SUSIMasterAPITest, ReadCV_Success) {
     // This is a simplified test. A full end-to-end test
     // would be required to verify the data path.
     uint8_t value;
+    // We need to push some dummy bits for the read to consume
+    for(int i = 0; i < 8; i++) {
+        mock_hal.read_bits.push(0);
+    }
     EXPECT_EQ(api.readCV(5, 123, value), SUCCESS);
 }
 
@@ -188,10 +192,13 @@ TEST_F(SUSIMasterAPITest, PerformHandshake) {
     };
 
     mock_hal.ack_result = SUCCESS;
-    mock_hal.read_bytes.push(SUSI_MSG_BIDI_IDLE);
-    mock_hal.read_bytes.push(0x00);
-    mock_hal.read_bytes.push(SUSI_MSG_BIDI_IDLE);
-    mock_hal.read_bytes.push(0x00);
+    // We need to push the bits for the 4-byte response
+    uint8_t response[] = {SUSI_MSG_BIDI_IDLE, 0x00, SUSI_MSG_BIDI_IDLE, 0x00};
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 8; j++) {
+            mock_hal.read_bits.push((response[i] >> j) & 0x01);
+        }
+    }
 
     SusiMasterResult result = api.performHandshake();
 

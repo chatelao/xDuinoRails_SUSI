@@ -198,17 +198,20 @@ SusiMasterResult SUSI_Master_API::performHandshake() {
 
     for (uint8_t i = 1; i <= 3; i++) {
         SUSI_Packet packet;
-        packet.address = 0; // Broadcast address for handshake
+        packet.address = 0; // Address is 0 for BiDi calls
         packet.command = SUSI_CMD_BIDI_HOST_CALL;
-        packet.data = i | 0x04; // Module Number + Forced Response bit
+        packet.data = i | 0x04; // Module Number (1-3) + Forced Response bit
 
         SusiMasterResult result = _master.sendPacket(packet, true);
         if (result == SUCCESS) {
+            // After a successful handshake, the slave sends back an IDLE message.
+            // We read the 4-byte response to confirm.
             uint8_t response[4];
             for (int j = 0; j < 4; j++) {
                 response[j] = _master.readByteAfterRequest();
             }
 
+            // A valid handshake response is two IDLE messages.
             if (response[0] == SUSI_MSG_BIDI_IDLE && response[2] == SUSI_MSG_BIDI_IDLE) {
                 _add_bidi_slave(i);
             }

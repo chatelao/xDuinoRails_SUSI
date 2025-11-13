@@ -77,6 +77,10 @@ TEST(SUSI_Master_API, readCV) {
     };
 
     uint8_t value;
+    // We need to push some dummy bits for the read to consume
+    for(int i = 0; i < 8; i++) {
+        hal.read_bits.push(0);
+    }
     EXPECT_EQ(api.readCV(10, 1024, value), SUCCESS);
 
     EXPECT_EQ(sentPackets.size(), 2);
@@ -101,10 +105,12 @@ TEST(SUSI_Master_API, performHandshake) {
     };
 
     // Simulate a successful handshake response for slave 1
-    hal.read_bytes.push(SUSI_MSG_BIDI_IDLE);
-    hal.read_bytes.push(0x00);
-    hal.read_bytes.push(SUSI_MSG_BIDI_IDLE);
-    hal.read_bytes.push(0x00);
+    uint8_t response[] = {SUSI_MSG_BIDI_IDLE, 0x00, SUSI_MSG_BIDI_IDLE, 0x00};
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 8; j++) {
+            hal.read_bits.push((response[i] >> j) & 0x01);
+        }
+    }
 
     EXPECT_EQ(api.performHandshake(), SUCCESS);
 

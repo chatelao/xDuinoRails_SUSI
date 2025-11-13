@@ -84,7 +84,9 @@ TEST_F(LegacySusiE2ETest, readCV) {
 
     api.writeCV(SLAVE_ADDRESS, 1, 255);
 
-    hal.read_bytes.push(255);
+    for (int i = 0; i < 8; i++) {
+        hal.read_bits.push((255 >> i) & 0x01);
+    }
     uint8_t value;
     EXPECT_EQ(api.readCV(SLAVE_ADDRESS, 1, value), SUCCESS);
     EXPECT_EQ(value, 255);
@@ -106,44 +108,36 @@ namespace {
 
 TEST_F(LegacySusiE2ETest, Handshake) {
     hal.onSendPacket = [&](const SUSI_Packet& p, bool expectAck) {
-        if (p.command == SUSI_CMD_BIDI_HOST_CALL && (p.data & 0x04) != 0) { // Handshake call
+        if (p.command == SUSI_CMD_BIDI_HOST_CALL && (p.data & 0x04) != 0) {
             if ((p.data & 0x03) == SLAVE_ADDRESS) {
-                hal.ack_result = SUCCESS;
-                hal.read_bytes.push(SUSI_MSG_BIDI_IDLE);
-                hal.read_bytes.push(0x00);
-                hal.read_bytes.push(SUSI_MSG_BIDI_IDLE);
-                hal.read_bytes.push(0x00);
+                slave._test_receive_packet(p);
+                if (slave.available()) {
+                    slave.read(); // This will trigger the sendAck and sendByte calls in the slave
+                    hal.ack_result = SUCCESS;
+                } else {
+                    hal.ack_result = TIMEOUT;
+                }
             } else {
                 hal.ack_result = TIMEOUT;
             }
-        } else {
-            hal.ack_result = SUCCESS;
-        }
-
-        slave._test_receive_packet(p);
-        if(slave.available()) {
-            slave.read();
         }
     };
 
     EXPECT_EQ(api.performHandshake(), SUCCESS);
+    EXPECT_EQ(api.getBidiSlaveCount(), 1);
 
-    // After the handshake, the polling should work.
     _callback_fired_e2e = false;
     api.onBidiResponse(bidi_callback_e2e);
 
     hal.onSendPacket = [&](const SUSI_Packet& p, bool expectAck) {
-        std::cout << "Polling slave " << (int)p.data << std::endl;
-        hal.ack_result = SUCCESS;
-        hal.read_bytes.push(0xDE);
-        hal.read_bytes.push(0xAD);
-        hal.read_bytes.push(0xBE);
-        hal.read_bytes.push(0xEF);
+        if (p.command == SUSI_CMD_BIDI_HOST_CALL && p.data == SLAVE_ADDRESS) {
+            slave._test_receive_packet(p);
+            if (slave.available()) {
+                slave.read();
+                hal.ack_result = SUCCESS;
+            }
+        }
     };
-
-    while(!hal.read_bytes.empty()) {
-        hal.read_bytes.pop();
-    }
 
     api.pollSlaves();
 
