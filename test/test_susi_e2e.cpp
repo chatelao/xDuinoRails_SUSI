@@ -145,3 +145,39 @@ TEST_F(LegacySusiE2ETest, Handshake) {
     EXPECT_EQ(_callback_address_e2e, SLAVE_ADDRESS);
     EXPECT_EQ(_callback_data_e2e[0], 0xDE);
 }
+
+TEST_F(LegacySusiE2ETest, Poll) {
+    // Manually register a bidi slave for this test
+    api.registerBiDiSlave(SLAVE_ADDRESS);
+    slave.enableBidirectionalMode();
+
+    // Setup callback
+    _callback_fired_e2e = false;
+    memset(_callback_data_e2e, 0, sizeof(_callback_data_e2e));
+    api.onBidiResponse(bidi_callback_e2e);
+
+    // Setup mock for packet sending.
+    hal.onSendPacket = [&](const SUSI_Packet& p, bool expectAck) {
+        if (p.command == SUSI_CMD_BIDI_HOST_CALL && p.data == SLAVE_ADDRESS) {
+            slave._test_receive_packet(p);
+            if (slave.available()) {
+                slave.read(); // This should trigger ACK and response from slave
+                hal.ack_result = SUCCESS;
+            } else {
+                hal.ack_result = TIMEOUT;
+            }
+        }
+    };
+
+    // Action
+    api.pollSlaves();
+
+    // Assertions
+    EXPECT_TRUE(_callback_fired_e2e);
+    EXPECT_EQ(_callback_address_e2e, SLAVE_ADDRESS);
+    // The slave should respond with a hardcoded value.
+    EXPECT_EQ(_callback_data_e2e[0], 0xDE);
+    EXPECT_EQ(_callback_data_e2e[1], 0xAD);
+    EXPECT_EQ(_callback_data_e2e[2], 0xBE);
+    EXPECT_EQ(_callback_data_e2e[3], 0xEF);
+}
