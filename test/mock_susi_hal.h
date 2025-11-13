@@ -14,11 +14,13 @@ public:
     std::function<void(const SUSI_Packet&, bool)> onSendPacket;
     std::function<void()> afterSendPacket;
     SusiMasterResult ack_result = SUCCESS;
-    uint8_t last_sent_byte;
-    std::queue<uint8_t> read_bytes;
-    int bit_read_count = 0;
+    std::queue<bool> read_bits;
 
-    void sendByte(uint8_t byte) override { read_bytes.push(byte); }
+    void sendByte(uint8_t byte) override {
+        for (int i = 0; i < 8; i++) {
+            read_bits.push((byte >> i) & 0x01);
+        }
+    }
     void begin() override {}
     void set_clock_high() override {}
     void set_clock_low() override {}
@@ -27,17 +29,11 @@ public:
     void set_data_low() override {}
     bool read_data() override { return false; }
     bool read_bit() override {
-        if (read_bytes.empty()) {
+        if (read_bits.empty()) {
             return false;
         }
-
-        uint8_t current_byte = read_bytes.front();
-        bool bit = (current_byte >> bit_read_count) & 0x01;
-        bit_read_count++;
-        if (bit_read_count == 8) {
-            bit_read_count = 0;
-            read_bytes.pop();
-        }
+        bool bit = read_bits.front();
+        read_bits.pop();
         return bit;
     }
     SusiMasterResult waitForAck() override { return ack_result; }

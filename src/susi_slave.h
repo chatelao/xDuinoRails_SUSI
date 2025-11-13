@@ -57,6 +57,12 @@ public:
      */
     void onFunctionChange(FunctionCallback callback);
 
+    /**
+     * @brief Enables bidirectional communication mode.
+     * @see RCN-601
+     */
+    void enableBidirectionalMode();
+
 public:
     /**
      * @brief Gets the current speed of the slave.

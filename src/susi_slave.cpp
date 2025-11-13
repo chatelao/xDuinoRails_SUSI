@@ -27,6 +27,10 @@ void SUSI_Slave::begin(uint8_t address) {
     attachInterrupt(digitalPinToInterrupt(_hal.get_clock_pin()), onClockFall, FALLING);
 }
 
+void SUSI_Slave::enableBidirectionalMode() {
+    _bidirectional_mode = true;
+}
+
 void SUSI_Slave::onFunctionChange(FunctionCallback callback) {
     _function_callback = callback;
 }
@@ -83,16 +87,19 @@ SUSI_Packet SUSI_Slave::read() {
                 {
                     uint8_t module_number = packet.data & 0x03;
                     bool forced_response = (packet.data & 0x04) != 0;
+
                     if (forced_response && module_number == _address) {
-                        _bidirectional_mode = true;
+                        _bidirectional_mode = true; // Enable BiDi on handshake
                         _hal.sendAck();
+                        // Respond with two IDLE messages as per RCN-601
                         _hal.sendByte(SUSI_MSG_BIDI_IDLE);
                         _hal.sendByte(0x00);
                         _hal.sendByte(SUSI_MSG_BIDI_IDLE);
                         _hal.sendByte(0x00);
-                    } else if (_bidirectional_mode) {
+                    } else if (_bidirectional_mode && module_number == _address) {
+                        // This is a regular poll, not a handshake
                         _hal.sendAck();
-                        // Send a hardcoded response for now
+                        // Here you would send actual data, but for now we send a placeholder
                         _hal.sendByte(0xDE);
                         _hal.sendByte(0xAD);
                         _hal.sendByte(0xBE);
