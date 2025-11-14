@@ -378,12 +378,54 @@ TEST_F(SUSISlaveTest, ReadSpecialCVs) {
     slave.setHardwareID(0x5678);
     slave.setVersionNumber(0x0102);
 
-    EXPECT_EQ(slave.readCV(CV_SUSI_MODULE_NUM), SLAVE_ADDRESS);
-    EXPECT_EQ(slave.readCV(CV_MANUFACTURER_ID_L), 0x34);
-    EXPECT_EQ(slave.readCV(CV_MANUFACTURER_ID_H), 0x12);
-    EXPECT_EQ(slave.readCV(CV_HARDWARE_ID_L), 0x78);
-    EXPECT_EQ(slave.readCV(CV_HARDWARE_ID_H), 0x56);
-    EXPECT_EQ(slave.readCV(CV_VERSION_NUM_L), 0x02);
-    EXPECT_EQ(slave.readCV(CV_VERSION_NUM_H), 0x01);
-    EXPECT_EQ(slave.readCV(CV_STATUS_BITS), 0x00);
+    // Bank 0 should be selected by default
+    EXPECT_EQ(slave.readCV(CV_MANUFACTURER_ID), 0x12);
+    EXPECT_EQ(slave.readCV(CV_MANUFACTURER_ID + 1), 0x34);
+    EXPECT_EQ(slave.readCV(CV_VERSION_NUM), 0x01);
+    EXPECT_EQ(slave.readCV(CV_VERSION_NUM + 1), 0x02);
+
+    // Switch to bank 1
+    SUSI_Packet packet;
+    packet.address = SLAVE_ADDRESS;
+    packet.command = SUSI_CMD_WRITE_CV;
+    packet.data = (CV_SUSI_CV_BANKING >> 8) & 0xFF;
+    slave._test_receive_packet(packet);
+    slave.read();
+
+    packet.command = CV_SUSI_CV_BANKING & 0xFF;
+    packet.data = 1;
+    slave._test_receive_packet(packet);
+    slave.read();
+
+    // Now, reading CV_MANUFACTURER_ID should return the hardware ID
+    EXPECT_EQ(slave.readCV(CV_MANUFACTURER_ID), 0x56);
+    EXPECT_EQ(slave.readCV(CV_MANUFACTURER_ID + 1), 0x78);
+
+    // Status bits
+    slave.setStatusBits(1 << STATUS_BIT_WAIT);
+    EXPECT_EQ(slave.readCV(CV_STATUS_BITS), 1 << STATUS_BIT_WAIT);
+    slave.clearStatusBits(1 << STATUS_BIT_WAIT);
+    EXPECT_EQ(slave.readCV(CV_STATUS_BITS), 0);
+}
+
+TEST_F(SUSISlaveTest, BiDiStatusResponse) {
+    slave.enableBidirectionalMode();
+    slave.setStatusBits(1 << STATUS_BIT_SLOW);
+
+    hal.onSendByte = [&](uint8_t byte) {
+        static int byte_count = 0;
+        if (byte_count == 0) {
+            EXPECT_EQ(byte, SUSI_MSG_BIDI_STATE_RESPONSE);
+        } else if (byte_count == 1) {
+            EXPECT_EQ(byte, 1 << STATUS_BIT_SLOW);
+        }
+        byte_count++;
+    };
+
+    SUSI_Packet poll_packet;
+    poll_packet.address = SLAVE_ADDRESS;
+    poll_packet.command = SUSI_CMD_BIDI_HOST_CALL;
+    poll_packet.data = SLAVE_ADDRESS;
+    slave._test_receive_packet(poll_packet);
+    slave.read();
 }

@@ -41,6 +41,12 @@ const uint8_t SUSI_CMD_BIDI_HOST_CALL = 0x01;
 const uint8_t SUSI_MSG_BIDI_IDLE = 0x8A;
 
 /**
+ * @brief The SUSI response message for a BiDi state response.
+ * @see RCN-601
+ */
+const uint8_t SUSI_MSG_BIDI_STATE_RESPONSE = 0x8B;
+
+/**
  * @brief The SUSI response message for a BiDi CV response.
  * @see RCN-601
  */
@@ -78,13 +84,16 @@ const uint8_t SUSI_CMD_READ_CV_BANK_2 = 0x0E;
 
 // RCN-602 Specific CVs
 const uint16_t CV_SUSI_MODULE_NUM = 897;
-const uint16_t CV_MANUFACTURER_ID_L = 900;
-const uint16_t CV_MANUFACTURER_ID_H = 940;
-const uint16_t CV_HARDWARE_ID_L = 980;
-const uint16_t CV_HARDWARE_ID_H = 901;
-const uint16_t CV_VERSION_NUM_L = 941;
-const uint16_t CV_VERSION_NUM_H = 981;
+const uint16_t CV_MANUFACTURER_ID = 900;
+const uint16_t CV_VERSION_NUM = 902;
 const uint16_t CV_STATUS_BITS = 1020;
+const uint16_t CV_SUSI_CV_BANKING = 1021;
+
+// RCN-602 Status Bits
+const uint8_t STATUS_BIT_WAIT = 0;
+const uint8_t STATUS_BIT_SLOW = 1;
+const uint8_t STATUS_BIT_HOLD = 2;
+const uint8_t STATUS_BIT_STOP = 3;
 
 
 #endif // SUSI_COMMANDS_H
