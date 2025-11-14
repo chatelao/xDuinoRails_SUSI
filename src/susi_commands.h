@@ -41,6 +41,24 @@ const uint8_t SUSI_CMD_BIDI_HOST_CALL = 0x01;
 const uint8_t SUSI_MSG_BIDI_IDLE = 0x8A;
 
 /**
+ * @brief The SUSI response message for a BiDi CV response.
+ * @see RCN-601
+ */
+const uint8_t SUSI_MSG_BIDI_CV_RESPONSE = 0x8D;
+
+/**
+ * @brief The SUSI response message for a BiDi error.
+ * @see RCN-601
+ */
+const uint8_t SUSI_MSG_BIDI_ERROR = 0x8E;
+
+/**
+ * @brief The SUSI response message for a BiDi bank response.
+ * @see RCN-601
+ */
+const uint8_t SUSI_MSG_BIDI_BANK_RESPONSE = 0x8F;
+
+/**
  * @brief The SUSI command to read CV bank 0.
  * @see RCN-601
  */

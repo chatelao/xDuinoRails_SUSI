@@ -130,6 +130,7 @@ public:
 #endif
 
 private:
+    void _send_bidi_response(uint8_t header1, uint8_t data1, uint8_t header2, uint8_t data2);
     void getCVBank(uint8_t bank, uint8_t* data);
     static void onClockFall();
     void handleClockFall();

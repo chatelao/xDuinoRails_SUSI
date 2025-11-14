@@ -85,8 +85,13 @@ TEST_F(LegacySusiE2ETest, readCV) {
 
     api.writeCV(SLAVE_ADDRESS, 1, 255);
 
-    for (int i = 0; i < 8; i++) {
-        hal.read_bits.push((255 >> i) & 0x01);
+    // The slave will send back a 4-byte BiDi message.
+    // We need to push the bits for the mock HAL to read.
+    uint8_t response[] = {SUSI_MSG_BIDI_CV_RESPONSE, 255, SUSI_MSG_BIDI_CV_RESPONSE, 0};
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 8; j++) {
+            hal.read_bits.push((response[i] >> j) & 0x01);
+        }
     }
     uint8_t value;
     EXPECT_EQ(api.readCV(SLAVE_ADDRESS, 1, value), SUCCESS);
@@ -242,4 +247,73 @@ TEST_F(LegacySusiE2ETest, readCVBank) {
     EXPECT_EQ(received_data[0], 10);
     EXPECT_EQ(received_data[19], 20);
     EXPECT_EQ(received_data[39], 30);
+}
+
+TEST_F(LegacySusiE2ETest, readCV_BiDi) {
+    hal.ack_result = SUCCESS;
+
+    hal.onSendPacket = [&](const SUSI_Packet& p, bool expectAck) {
+        slave._test_receive_packet(p);
+    };
+    hal.afterSendPacket = [&]() {
+        EXPECT_TRUE(slave.available());
+        slave.read();
+    };
+
+    api.writeCV(SLAVE_ADDRESS, 1, 255);
+
+    // The slave will send back a 4-byte BiDi message.
+    // We need to push the bits for the mock HAL to read.
+    uint8_t response[] = {SUSI_MSG_BIDI_CV_RESPONSE, 255, SUSI_MSG_BIDI_CV_RESPONSE, 0};
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 8; j++) {
+            hal.read_bits.push((response[i] >> j) & 0x01);
+        }
+    }
+
+    uint8_t value;
+    EXPECT_EQ(api.readCV(SLAVE_ADDRESS, 1, value), SUCCESS);
+
+    // The slave should have sent back a BiDi message with the CV value.
+    // The master should parse this and return the correct value.
+    EXPECT_EQ(value, 255);
+}
+
+TEST_F(LegacySusiE2ETest, readSpecialCVs) {
+    hal.ack_result = SUCCESS;
+
+    slave.setManufacturerID(0x1234);
+    slave.setHardwareID(0x5678);
+    slave.setVersionNumber(0x9ABC);
+
+    hal.onSendPacket = [&](const SUSI_Packet& p, bool expectAck) {
+        slave._test_receive_packet(p);
+    };
+    hal.afterSendPacket = [&]() {
+        EXPECT_TRUE(slave.available());
+        slave.read();
+    };
+
+    uint8_t value;
+
+    auto check_cv = [&](uint16_t cv, uint8_t expected_value) {
+        hal.read_bits = {};
+        uint8_t response[] = {SUSI_MSG_BIDI_CV_RESPONSE, expected_value, SUSI_MSG_BIDI_CV_RESPONSE, 0};
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 8; j++) {
+                hal.read_bits.push((response[i] >> j) & 0x01);
+            }
+        }
+        EXPECT_EQ(api.readCV(SLAVE_ADDRESS, cv, value), SUCCESS);
+        EXPECT_EQ(value, expected_value);
+    };
+
+    check_cv(CV_SUSI_MODULE_NUM, SLAVE_ADDRESS);
+    check_cv(CV_MANUFACTURER_ID_L, 0x34);
+    check_cv(CV_MANUFACTURER_ID_H, 0x12);
+    check_cv(CV_HARDWARE_ID_L, 0x78);
+    check_cv(CV_HARDWARE_ID_H, 0x56);
+    check_cv(CV_VERSION_NUM_L, 0xBC);
+    check_cv(CV_VERSION_NUM_H, 0x9A);
+    check_cv(CV_STATUS_BITS, 0);
 }

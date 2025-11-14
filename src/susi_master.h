@@ -39,6 +39,12 @@ public:
      */
     uint8_t readByteAfterRequest();
 
+    /**
+     * @brief Reads a byte from the SUSI bus, without generating a clock pulse.
+     * @return uint8_t The byte read from the bus.
+     */
+    uint8_t readByteFromSlave();
+
 private:
     SusiHAL& _hal;
     unsigned long _last_packet_time_ms;

@@ -63,12 +63,12 @@ To ensure a robust and testable library, the following principles should be foll
 - [x] **[RCN601-M3]** After sending a BiDi call, implement the 4-5ms response window for the module to provide an ACK.
 - [x] **[RCN601-M4]** Upon receiving an ACK, generate 32 clock pulses to read the 4-byte BiDi message from the module.
 - [x] **[M8]** Create a mechanism to listen for and parse responses from slave modules.
-- [ ] **[RCN601-M5]** Implement the CV Bank Reading procedure:
-    - [ ] Send the CV Bank Read command (0x0C, 0x0D, or 0x0E).
-    - [ ] Wait for ACK.
-    - [ ] Clock in the 40 bytes of the CV bank.
-    - [ ] Clock in the 2-byte CRC checksum.
-    - [ ] Implement CRC checksum validation.
+- [x] **[RCN601-M5]** Implement the CV Bank Reading procedure:
+    - [x] Send the CV Bank Read command (0x0C, 0x0D, or 0x0E).
+    - [x] Wait for ACK.
+    - [x] Clock in the 40 bytes of the CV bank.
+    - [x] Clock in the 2-byte CRC checksum.
+    - [x] Implement CRC checksum validation.
 
 ### Slave (Module) Role
 
@@ -76,10 +76,10 @@ To ensure a robust and testable library, the following principles should be foll
 - [x] **[RCN601-S2]** Upon receiving a BiDi call, send an ACK within 2ms if data is available to transmit.
 - [x] **[S13]** Create a function to generate a response packet for bidirectional communication.
 - [x] **[RCN601-S3]** After sending an ACK, place the 4-byte BiDi message on the data line, synchronized with the Host's 32 clock pulses.
-- [ ] **[RCN601-S4]** Implement the CV Bank Reading response:
-    - [ ] On receiving a CV Bank Read command, send an ACK if the bank is available.
-    - [ ] Transmit the 40 bytes of the requested CV bank.
-    - [ ] Calculate and transmit the CRC checksum.
+- [x] **[RCN601-S4]** Implement the CV Bank Reading response:
+    - [x] On receiving a CV Bank Read command, send an ACK if the bank is available.
+    - [x] Transmit the 40 bytes of the requested CV bank.
+    - [x] Calculate and transmit the CRC checksum.
 - [ ] **[RCN601-S5]** Implement logic to generate all relevant BiDi messages.
 
 
