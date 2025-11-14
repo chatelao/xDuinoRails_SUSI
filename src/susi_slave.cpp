@@ -18,7 +18,11 @@ SUSI_Slave::SUSI_Slave(SusiHAL& hal) : _hal(hal) {
     _cv_address = 0;
     _cv_read_mode = false;
     _bidirectional_mode = false;
+    _bidi_data_available = false;
     _function_callback = nullptr;
+    for (int i = 0; i < 4; i++) {
+        _bidi_response_buffer[i] = 0;
+    }
 }
 
 void SUSI_Slave::begin(uint8_t address) {
@@ -33,6 +37,15 @@ void SUSI_Slave::enableBidirectionalMode() {
 
 void SUSI_Slave::onFunctionChange(FunctionCallback callback) {
     _function_callback = callback;
+}
+
+void SUSI_Slave::queueBidirectionalData(const uint8_t* data) {
+    if (data != nullptr) {
+        for (int i = 0; i < 4; i++) {
+            _bidi_response_buffer[i] = data[i];
+        }
+        _bidi_data_available = true;
+    }
 }
 
 bool SUSI_Slave::available() {
@@ -100,10 +113,18 @@ SUSI_Packet SUSI_Slave::read() {
                         // This is a regular poll, not a handshake
                         _hal.sendAck();
                         // Here you would send actual data, but for now we send a placeholder
-                        _hal.sendByte(0xDE);
-                        _hal.sendByte(0xAD);
-                        _hal.sendByte(0xBE);
-                        _hal.sendByte(0xEF);
+                        if (_bidi_data_available) {
+                            for (int i = 0; i < 4; i++) {
+                                _hal.sendByte(_bidi_response_buffer[i]);
+                            }
+                            _bidi_data_available = false; // Reset after sending
+                        } else {
+                            // Send IDLE message if no data is queued
+                            _hal.sendByte(SUSI_MSG_BIDI_IDLE);
+                            _hal.sendByte(0x00);
+                            _hal.sendByte(SUSI_MSG_BIDI_IDLE);
+                            _hal.sendByte(0x00);
+                        }
                     }
                 }
                 break;
