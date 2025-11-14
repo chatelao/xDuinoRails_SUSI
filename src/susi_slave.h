@@ -97,6 +97,24 @@ public:
      */
     uint8_t readCV(uint16_t cv);
 
+    /**
+     * @brief Sets the manufacturer ID of the slave.
+     * @param id The manufacturer ID.
+     */
+    void setManufacturerID(uint16_t id);
+
+    /**
+     * @brief Sets the hardware ID of the slave.
+     * @param id The hardware ID.
+     */
+    void setHardwareID(uint16_t id);
+
+    /**
+     * @brief Sets the version number of the slave.
+     * @param version The version number.
+     */
+    void setVersionNumber(uint16_t version);
+
 #ifdef TESTING
     /**
      * @brief Checks if bidirectional mode is enabled.
@@ -112,6 +130,7 @@ public:
 #endif
 
 private:
+    void getCVBank(uint8_t bank, uint8_t* data);
     static void onClockFall();
     void handleClockFall();
 
@@ -134,6 +153,10 @@ private:
     uint8_t _bidi_response_buffer[4];
     bool _bidi_data_available;
     FunctionCallback _function_callback;
+
+    uint16_t _manufacturer_id;
+    uint16_t _hardware_id;
+    uint16_t _version_number;
 };
 
 #endif // SUSI_SLAVE_H

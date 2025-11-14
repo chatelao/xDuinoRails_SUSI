@@ -24,7 +24,8 @@ enum SusiMasterResult {
     /**
      * @brief The slave list is full.
      */
-    SLAVE_LIST_FULL
+    SLAVE_LIST_FULL,
+    INVALID_CRC
 };
 
 #endif // SUSI_RESPONSE_H

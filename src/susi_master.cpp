@@ -1,5 +1,6 @@
 #include "susi_master.h"
 #include "susi_commands.h"
+#include "susi_crc.h"
 
 // Timing constants from the SUSI specification
 const unsigned long SUSI_INTER_BYTE_TIMEOUT_MS = 7;
@@ -281,3 +282,44 @@ SusiMasterResult SUSI_Master_API::readCV(uint8_t address, uint16_t cv, uint8_t& 
     return SUCCESS;
 }
 
+SusiMasterResult SUSI_Master_API::readCVBank(uint8_t address, uint8_t bank, uint8_t* data) {
+    SUSI_Packet packet;
+    packet.address = address;
+
+    switch (bank) {
+        case 0:
+            packet.command = SUSI_CMD_READ_CV_BANK_0;
+            break;
+        case 1:
+            packet.command = SUSI_CMD_READ_CV_BANK_1;
+            break;
+        case 2:
+            packet.command = SUSI_CMD_READ_CV_BANK_2;
+            break;
+        default:
+            return INVALID_ACK; // Or some other error
+    }
+
+    packet.data = 0;
+
+    SusiMasterResult result = _master.sendPacket(packet, true);
+    if (result != SUCCESS) {
+        return result;
+    }
+
+    for (int i = 0; i < 40; i++) {
+        data[i] = _master.readByteAfterRequest();
+    }
+
+    uint16_t received_crc = 0;
+    received_crc |= (uint16_t)_master.readByteAfterRequest() << 8;
+    received_crc |= _master.readByteAfterRequest();
+
+    uint16_t calculated_crc = crc16_ccitt(data, 40);
+
+    if (received_crc != calculated_crc) {
+        return INVALID_CRC;
+    }
+
+    return SUCCESS;
+}

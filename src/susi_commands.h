@@ -40,4 +40,33 @@ const uint8_t SUSI_CMD_BIDI_HOST_CALL = 0x01;
  */
 const uint8_t SUSI_MSG_BIDI_IDLE = 0x8A;
 
+/**
+ * @brief The SUSI command to read CV bank 0.
+ * @see RCN-601
+ */
+const uint8_t SUSI_CMD_READ_CV_BANK_0 = 0x0C;
+
+/**
+ * @brief The SUSI command to read CV bank 1.
+ * @see RCN-601
+ */
+const uint8_t SUSI_CMD_READ_CV_BANK_1 = 0x0D;
+
+/**
+ * @brief The SUSI command to read CV bank 2.
+ * @see RCN-601
+ */
+const uint8_t SUSI_CMD_READ_CV_BANK_2 = 0x0E;
+
+// RCN-602 Specific CVs
+const uint16_t CV_SUSI_MODULE_NUM = 897;
+const uint16_t CV_MANUFACTURER_ID_L = 900;
+const uint16_t CV_MANUFACTURER_ID_H = 940;
+const uint16_t CV_HARDWARE_ID_L = 980;
+const uint16_t CV_HARDWARE_ID_H = 901;
+const uint16_t CV_VERSION_NUM_L = 941;
+const uint16_t CV_VERSION_NUM_H = 981;
+const uint16_t CV_STATUS_BITS = 1020;
+
+
 #endif // SUSI_COMMANDS_H

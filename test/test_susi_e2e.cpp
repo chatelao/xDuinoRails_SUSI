@@ -4,6 +4,7 @@
 #include "mock_hal.h"
 #include "mock_susi_hal.h"
 #include "susi_commands.h"
+#include "susi_crc.h"
 
 // Test fixture for End-to-End tests
 class LegacySusiE2ETest : public ::testing::Test {
@@ -197,4 +198,48 @@ TEST_F(LegacySusiE2ETest, Poll) {
     EXPECT_EQ(_callback_data_e2e[1], 0xBB);
     EXPECT_EQ(_callback_data_e2e[2], 0xCC);
     EXPECT_EQ(_callback_data_e2e[3], 0xDD);
+}
+
+TEST_F(LegacySusiE2ETest, readCVBank) {
+    hal.ack_result = SUCCESS;
+
+    // Write some CVs to the slave
+    api.writeCV(SLAVE_ADDRESS, 1, 10);
+    api.writeCV(SLAVE_ADDRESS, 20, 20);
+    api.writeCV(SLAVE_ADDRESS, 40, 30);
+
+    hal.onSendPacket = [&](const SUSI_Packet& p, bool expectAck) {
+        slave._test_receive_packet(p);
+    };
+
+    hal.afterSendPacket = [&]() {
+        EXPECT_TRUE(slave.available());
+        slave.read();
+    };
+
+    // Prepare the data for the mock HAL to send back
+    uint8_t bank_data[40] = {0};
+    bank_data[0] = 10;
+    bank_data[19] = 20;
+    bank_data[39] = 30;
+    uint16_t crc = crc16_ccitt(bank_data, 40);
+
+    for (int i = 0; i < 40; i++) {
+        for (int j = 0; j < 8; j++) {
+            hal.read_bits.push((bank_data[i] >> j) & 0x01);
+        }
+    }
+    for (int j = 0; j < 8; j++) {
+        hal.read_bits.push((crc >> (j + 8)) & 0x01);
+    }
+    for (int j = 0; j < 8; j++) {
+        hal.read_bits.push((crc >> j) & 0x01);
+    }
+
+    uint8_t received_data[40];
+    EXPECT_EQ(api.readCVBank(SLAVE_ADDRESS, 0, received_data), SUCCESS);
+
+    EXPECT_EQ(received_data[0], 10);
+    EXPECT_EQ(received_data[19], 20);
+    EXPECT_EQ(received_data[39], 30);
 }
