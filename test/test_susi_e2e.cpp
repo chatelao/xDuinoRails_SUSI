@@ -143,7 +143,7 @@ TEST_F(LegacySusiE2ETest, Handshake) {
 
     EXPECT_TRUE(_callback_fired_e2e);
     EXPECT_EQ(_callback_address_e2e, SLAVE_ADDRESS);
-    EXPECT_EQ(_callback_data_e2e[0], 0xDE);
+    EXPECT_EQ(_callback_data_e2e[0], SUSI_MSG_BIDI_IDLE);
 }
 
 TEST_F(LegacySusiE2ETest, Poll) {
@@ -175,9 +175,26 @@ TEST_F(LegacySusiE2ETest, Poll) {
     // Assertions
     EXPECT_TRUE(_callback_fired_e2e);
     EXPECT_EQ(_callback_address_e2e, SLAVE_ADDRESS);
-    // The slave should respond with a hardcoded value.
-    EXPECT_EQ(_callback_data_e2e[0], 0xDE);
-    EXPECT_EQ(_callback_data_e2e[1], 0xAD);
-    EXPECT_EQ(_callback_data_e2e[2], 0xBE);
-    EXPECT_EQ(_callback_data_e2e[3], 0xEF);
+    // Queue some data on the slave
+    uint8_t slave_data[] = {0xAA, 0xBB, 0xCC, 0xDD};
+    slave.queueBidirectionalData(slave_data);
+
+    // The mock HAL needs to know what the slave will send back.
+    // This is a bit of a hack, but necessary for the mock to work.
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 8; j++) {
+            hal.read_bits.push((slave_data[i] >> j) & 1);
+        }
+    }
+
+    // Action
+    api.pollSlaves();
+
+    // Assertions
+    EXPECT_TRUE(_callback_fired_e2e);
+    EXPECT_EQ(_callback_address_e2e, SLAVE_ADDRESS);
+    EXPECT_EQ(_callback_data_e2e[0], 0xAA);
+    EXPECT_EQ(_callback_data_e2e[1], 0xBB);
+    EXPECT_EQ(_callback_data_e2e[2], 0xCC);
+    EXPECT_EQ(_callback_data_e2e[3], 0xDD);
 }

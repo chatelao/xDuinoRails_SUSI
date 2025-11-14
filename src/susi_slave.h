@@ -84,6 +84,13 @@ public:
     bool getFunction(uint8_t function) const { return (_functions >> function) & 1; }
 
     /**
+     * @brief Queues data to be sent in the next bidirectional response.
+     * @param data A pointer to a 4-byte array containing the data to send.
+     * @see RCN-601
+     */
+    void queueBidirectionalData(const uint8_t* data);
+
+    /**
      * @brief Reads the value of a CV.
      * @param cv The CV to read.
      * @return uint8_t The value of the CV.
@@ -124,6 +131,8 @@ private:
     uint8_t _cv_values[MAX_CVS];
     uint8_t _cv_count;
     bool _bidirectional_mode;
+    uint8_t _bidi_response_buffer[4];
+    bool _bidi_data_available;
     FunctionCallback _function_callback;
 };
 
