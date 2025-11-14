@@ -140,6 +140,16 @@ public:
     SusiMasterResult readCV(uint8_t address, uint16_t cv, uint8_t& value);
 
     /**
+     * @brief Reads a CV bank from a SUSI slave device.
+     * @param address The address of the slave.
+     * @param bank The CV bank to read (0-2).
+     * @param data A pointer to a 40-byte array to store the data in.
+     * @return SusiMasterResult A result code indicating the status of the operation.
+     * @see RCN-601
+     */
+    SusiMasterResult readCVBank(uint8_t address, uint8_t bank, uint8_t* data);
+
+    /**
      * @brief Performs the handshake to detect and register bidirectional slaves.
      * @return SusiMasterResult A result code indicating the status of the operation.
      * @see RCN-601

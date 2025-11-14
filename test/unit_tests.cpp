@@ -4,6 +4,7 @@
 #include "susi_master.h"
 #include "susi_slave.h"
 #include "susi_commands.h"
+#include "susi_crc.h"
 #include <vector>
 
 // Test fixture for SusiHAL tests
@@ -212,6 +213,69 @@ TEST_F(SUSIMasterAPITest, PerformHandshake) {
     EXPECT_EQ(sentPackets[2].data, 3 | 0x04);
 }
 
+TEST_F(SUSIMasterAPITest, ReadCVBank_Success) {
+    SUSI_Packet sentPacket;
+    mock_hal.onSendPacket = [&](const SUSI_Packet& p, bool expectAck) {
+        sentPacket = p;
+    };
+
+    mock_hal.ack_result = SUCCESS;
+
+    // Prepare the data that the slave will "send" back
+    uint8_t bank_data[40];
+    for (int i = 0; i < 40; i++) {
+        bank_data[i] = i;
+    }
+
+    uint16_t crc = crc16_ccitt(bank_data, 40);
+
+    // Push the data and CRC into the mock HAL's read buffer
+    for (int i = 0; i < 40; i++) {
+        for (int j = 0; j < 8; j++) {
+            mock_hal.read_bits.push((bank_data[i] >> j) & 0x01);
+        }
+    }
+    for (int j = 0; j < 8; j++) {
+        mock_hal.read_bits.push((crc >> (j + 8)) & 0x01);
+    }
+    for (int j = 0; j < 8; j++) {
+        mock_hal.read_bits.push((crc >> j) & 0x01);
+    }
+
+    uint8_t received_data[40];
+    SusiMasterResult result = api.readCVBank(10, 1, received_data);
+
+    EXPECT_EQ(result, SUCCESS);
+    EXPECT_EQ(sentPacket.address, 10);
+    EXPECT_EQ(sentPacket.command, SUSI_CMD_READ_CV_BANK_1);
+
+    for (int i = 0; i < 40; i++) {
+        EXPECT_EQ(received_data[i], bank_data[i]);
+    }
+}
+
+TEST_F(SUSIMasterAPITest, ReadCVBank_InvalidCRC) {
+    mock_hal.ack_result = SUCCESS;
+
+    uint8_t bank_data[40] = {0};
+    uint16_t crc = 0x1234; // Invalid CRC
+
+    for (int i = 0; i < 40; i++) {
+        for (int j = 0; j < 8; j++) {
+            mock_hal.read_bits.push((bank_data[i] >> j) & 0x01);
+        }
+    }
+    for (int j = 0; j < 8; j++) {
+        mock_hal.read_bits.push((crc >> (j + 8)) & 0x01);
+    }
+    for (int j = 0; j < 8; j++) {
+        mock_hal.read_bits.push((crc >> j) & 0x01);
+    }
+
+    uint8_t received_data[40];
+    EXPECT_EQ(api.readCVBank(10, 0, received_data), INVALID_CRC);
+}
+
 
 class SUSISlaveTest : public ::testing::Test {
 protected:
@@ -307,4 +371,19 @@ TEST_F(SUSISlaveTest, HandshakeResponse) {
     slave.read();
 
     EXPECT_TRUE(slave.isBidirectionalModeEnabled());
+}
+
+TEST_F(SUSISlaveTest, ReadSpecialCVs) {
+    slave.setManufacturerID(0x1234);
+    slave.setHardwareID(0x5678);
+    slave.setVersionNumber(0x0102);
+
+    EXPECT_EQ(slave.readCV(CV_SUSI_MODULE_NUM), SLAVE_ADDRESS);
+    EXPECT_EQ(slave.readCV(CV_MANUFACTURER_ID_L), 0x34);
+    EXPECT_EQ(slave.readCV(CV_MANUFACTURER_ID_H), 0x12);
+    EXPECT_EQ(slave.readCV(CV_HARDWARE_ID_L), 0x78);
+    EXPECT_EQ(slave.readCV(CV_HARDWARE_ID_H), 0x56);
+    EXPECT_EQ(slave.readCV(CV_VERSION_NUM_L), 0x02);
+    EXPECT_EQ(slave.readCV(CV_VERSION_NUM_H), 0x01);
+    EXPECT_EQ(slave.readCV(CV_STATUS_BITS), 0x00);
 }
