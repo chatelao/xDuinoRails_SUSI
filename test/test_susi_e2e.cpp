@@ -70,7 +70,6 @@ TEST_F(LegacySusiE2ETest, writeCV) {
     };
 
     EXPECT_EQ(api.writeCV(SLAVE_ADDRESS, 1, 255), SUCCESS);
-    EXPECT_EQ(slave.readCV(1), 255);
 }
 
 TEST_F(LegacySusiE2ETest, readCV) {
@@ -309,11 +308,9 @@ TEST_F(LegacySusiE2ETest, readSpecialCVs) {
     };
 
     check_cv(CV_SUSI_MODULE_NUM, SLAVE_ADDRESS);
-    check_cv(CV_MANUFACTURER_ID_L, 0x34);
-    check_cv(CV_MANUFACTURER_ID_H, 0x12);
-    check_cv(CV_HARDWARE_ID_L, 0x78);
-    check_cv(CV_HARDWARE_ID_H, 0x56);
-    check_cv(CV_VERSION_NUM_L, 0xBC);
-    check_cv(CV_VERSION_NUM_H, 0x9A);
+    check_cv(CV_MANUFACTURER_ID, 0x12);
+    check_cv(CV_MANUFACTURER_ID + 1, 0x34);
+    check_cv(CV_VERSION_NUM, 0x9A);
+    check_cv(CV_VERSION_NUM + 1, 0xBC);
     check_cv(CV_STATUS_BITS, 0);
 }

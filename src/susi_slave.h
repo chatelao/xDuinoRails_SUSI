@@ -115,6 +115,18 @@ public:
      */
     void setVersionNumber(uint16_t version);
 
+    /**
+     * @brief Sets the status bits.
+     * @param bits The status bits to set.
+     */
+    void setStatusBits(uint8_t bits);
+
+    /**
+     * @brief Clears the status bits.
+     * @param bits The status bits to clear.
+     */
+    void clearStatusBits(uint8_t bits);
+
 #ifdef TESTING
     /**
      * @brief Checks if bidirectional mode is enabled.
@@ -145,6 +157,7 @@ private:
     bool _forward;
     uint32_t _functions;
     uint8_t _cv_bank;
+    uint8_t _cv_bank_select;
     uint16_t _cv_address;
     bool _cv_read_mode;
     uint16_t _cv_keys[MAX_CVS];
@@ -153,6 +166,7 @@ private:
     bool _bidirectional_mode;
     uint8_t _bidi_response_buffer[4];
     bool _bidi_data_available;
+    uint8_t _status_bits;
     FunctionCallback _function_callback;
 
     uint16_t _manufacturer_id;
