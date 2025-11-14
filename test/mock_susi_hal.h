@@ -13,10 +13,14 @@ public:
 
     std::function<void(const SUSI_Packet&, bool)> onSendPacket;
     std::function<void()> afterSendPacket;
+    std::function<void(uint8_t)> onSendByte;
     SusiMasterResult ack_result = SUCCESS;
     std::queue<bool> read_bits;
 
     void sendByte(uint8_t byte) override {
+        if (onSendByte) {
+            onSendByte(byte);
+        }
         for (int i = 0; i < 8; i++) {
             read_bits.push((byte >> i) & 0x01);
         }

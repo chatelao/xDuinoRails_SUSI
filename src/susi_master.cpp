@@ -106,15 +106,18 @@ void SUSI_Master::sendByte(uint8_t byte) {
 }
 
 uint8_t SUSI_Master::readByteAfterRequest() {
+    uint8_t value = readByteFromSlave();
+    _hal.generate_clock_pulse();
+    return value;
+}
+
+uint8_t SUSI_Master::readByteFromSlave() {
     uint8_t value = 0;
     for (int i = 0; i < 8; i++) {
         if (_hal.read_bit()) {
             value |= (1 << i);
         }
     }
-
-    _hal.generate_clock_pulse();
-
     return value;
 }
 
@@ -278,8 +281,16 @@ SusiMasterResult SUSI_Master_API::readCV(uint8_t address, uint16_t cv, uint8_t& 
         return result;
     }
 
-    value = _master.readByteAfterRequest();
-    return SUCCESS;
+    uint8_t header1 = _master.readByteAfterRequest();
+    if (header1 == SUSI_MSG_BIDI_CV_RESPONSE) {
+        value = _master.readByteAfterRequest();
+        _master.readByteAfterRequest(); // header2
+        _master.readByteAfterRequest(); // value2
+        return SUCCESS;
+    } else {
+        value = header1;
+        return SUCCESS;
+    }
 }
 
 SusiMasterResult SUSI_Master_API::readCVBank(uint8_t address, uint8_t bank, uint8_t* data) {

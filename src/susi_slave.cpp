@@ -52,6 +52,13 @@ void SUSI_Slave::queueBidirectionalData(const uint8_t* data) {
     }
 }
 
+void SUSI_Slave::_send_bidi_response(uint8_t header1, uint8_t data1, uint8_t header2, uint8_t data2) {
+    _hal.sendByte(header1);
+    _hal.sendByte(data1);
+    _hal.sendByte(header2);
+    _hal.sendByte(data2);
+}
+
 bool SUSI_Slave::available() {
     return _packetReady;
 }
@@ -139,25 +146,22 @@ SUSI_Packet SUSI_Slave::read() {
                         _bidirectional_mode = true; // Enable BiDi on handshake
                         _hal.sendAck();
                         // Respond with two IDLE messages as per RCN-601
-                        _hal.sendByte(SUSI_MSG_BIDI_IDLE);
-                        _hal.sendByte(0x00);
-                        _hal.sendByte(SUSI_MSG_BIDI_IDLE);
-                        _hal.sendByte(0x00);
+                        _send_bidi_response(SUSI_MSG_BIDI_IDLE, 0, SUSI_MSG_BIDI_IDLE, 0);
                     } else if (_bidirectional_mode && module_number == _address) {
                         // This is a regular poll, not a handshake
                         _hal.sendAck();
                         // Here you would send actual data, but for now we send a placeholder
                         if (_bidi_data_available) {
-                            for (int i = 0; i < 4; i++) {
-                                _hal.sendByte(_bidi_response_buffer[i]);
-                            }
+                            _send_bidi_response(
+                                _bidi_response_buffer[0],
+                                _bidi_response_buffer[1],
+                                _bidi_response_buffer[2],
+                                _bidi_response_buffer[3]
+                            );
                             _bidi_data_available = false; // Reset after sending
                         } else {
                             // Send IDLE message if no data is queued
-                            _hal.sendByte(SUSI_MSG_BIDI_IDLE);
-                            _hal.sendByte(0x00);
-                            _hal.sendByte(SUSI_MSG_BIDI_IDLE);
-                            _hal.sendByte(0x00);
+                            _send_bidi_response(SUSI_MSG_BIDI_IDLE, 0, SUSI_MSG_BIDI_IDLE, 0);
                         }
                     }
                 }
@@ -166,7 +170,9 @@ SUSI_Packet SUSI_Slave::read() {
                 if (_cv_bank != 0) {
                     _cv_address = ((_cv_bank - 1) << 8) | packet.command;
                     if (_cv_read_mode) {
-                        _hal.sendByte(readCV(_cv_address + 1));
+                        uint8_t value1 = readCV(_cv_address + 1);
+                        uint8_t value2 = readCV(_cv_address + 2);
+                        _send_bidi_response(SUSI_MSG_BIDI_CV_RESPONSE, value1, SUSI_MSG_BIDI_CV_RESPONSE, value2);
                     } else {
                         for (int i = 0; i < _cv_count; i++) {
                             if (_cv_keys[i] == _cv_address) {
@@ -189,31 +195,29 @@ SUSI_Packet SUSI_Slave::read() {
 }
 
 uint8_t SUSI_Slave::readCV(uint16_t cv) {
-    switch (cv) {
-        case CV_SUSI_MODULE_NUM:
-            return _address;
-        case CV_MANUFACTURER_ID_L:
-            return _manufacturer_id & 0xFF;
-        case CV_MANUFACTURER_ID_H:
-            return (_manufacturer_id >> 8) & 0xFF;
-        case CV_HARDWARE_ID_L:
-            return _hardware_id & 0xFF;
-        case CV_HARDWARE_ID_H:
-            return (_hardware_id >> 8) & 0xFF;
-        case CV_VERSION_NUM_L:
-            return _version_number & 0xFF;
-        case CV_VERSION_NUM_H:
-            return (_version_number >> 8) & 0xFF;
-        case CV_STATUS_BITS:
-            return 0x00; // Placeholder
-        default:
-            for (int i = 0; i < _cv_count; i++) {
-                if (_cv_keys[i] == cv - 1) {
-                    return _cv_values[i];
-                }
-            }
-            return 0;
+    // RCN-602 specifies CVs are 1-based.
+    // The internal storage is 0-based, so we subtract 1.
+    uint16_t cv_addr = cv - 1;
+
+    // Handle special CVs first
+    if (cv == CV_SUSI_MODULE_NUM) return _address;
+    if (cv == CV_MANUFACTURER_ID_L) return _manufacturer_id & 0xFF;
+    if (cv == CV_MANUFACTURER_ID_H) return (_manufacturer_id >> 8) & 0xFF;
+    if (cv == CV_HARDWARE_ID_L) return _hardware_id & 0xFF;
+    if (cv == CV_HARDWARE_ID_H) return (_hardware_id >> 8) & 0xFF;
+    if (cv == CV_VERSION_NUM_L) return _version_number & 0xFF;
+    if (cv == CV_VERSION_NUM_H) return (_version_number >> 8) & 0xFF;
+    if (cv == CV_STATUS_BITS) return 0; // Placeholder
+
+    // Then check the user-defined CVs
+    for (int i = 0; i < _cv_count; i++) {
+        if (_cv_keys[i] == cv_addr) {
+            return _cv_values[i];
+        }
     }
+
+    // Return 0 if the CV is not found
+    return 0;
 }
 
 void SUSI_Slave::getCVBank(uint8_t bank, uint8_t* data) {
