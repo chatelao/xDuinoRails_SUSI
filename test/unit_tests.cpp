@@ -414,10 +414,23 @@ TEST_F(SUSISlaveTest, ReadSpecialCVs_Banked) {
     slave.setVersionNumber(0x9ABC);
 
     // Default bank 0
+    // Reading any of the manufacturer ID CVs should return the manufacturer ID
+    EXPECT_EQ(slave.readCV(CV_MANUFACTURER_ID), 0x12);
+    EXPECT_EQ(slave.readCV(CV_MANUFACTURER_ID + 1), 0x34);
     EXPECT_EQ(slave.readCV(CV_MANUFACTURER_ID_BANK_1), 0x12);
     EXPECT_EQ(slave.readCV(CV_MANUFACTURER_ID_BANK_1 + 1), 0x34);
-    EXPECT_EQ(slave.readCV(CV_VERSION_NUM_BANK_1), 0x9A);
-    EXPECT_EQ(slave.readCV(CV_VERSION_NUM_BANK_1 + 1), 0xBC);
+    EXPECT_EQ(slave.readCV(CV_MANUFACTURER_ID_BANK_2), 0x12);
+    EXPECT_EQ(slave.readCV(CV_MANUFACTURER_ID_BANK_2 + 1), 0x34);
+
+    // Reading version number CV should return the version number
+    EXPECT_EQ(slave.readCV(CV_VERSION_NUM), 0x9A);
+    EXPECT_EQ(slave.readCV(CV_VERSION_NUM + 1), 0xBC);
+    // Reading other version number CVs should return 0, as they are for other banks
+    EXPECT_EQ(slave.readCV(CV_VERSION_NUM_BANK_1), 0);
+    EXPECT_EQ(slave.readCV(CV_VERSION_NUM_BANK_1 + 1), 0);
+    EXPECT_EQ(slave.readCV(CV_VERSION_NUM_BANK_2), 0);
+    EXPECT_EQ(slave.readCV(CV_VERSION_NUM_BANK_2 + 1), 0);
+
 
     // Switch to bank 1
     SUSI_Packet packet;
@@ -432,9 +445,21 @@ TEST_F(SUSISlaveTest, ReadSpecialCVs_Banked) {
     slave._test_receive_packet(packet);
     slave.read();
 
-    // Now, reading should return the hardware ID
+    // Now, reading any of the manufacturer ID CVs should return the hardware ID
+    EXPECT_EQ(slave.readCV(CV_MANUFACTURER_ID), 0x56);
+    EXPECT_EQ(slave.readCV(CV_MANUFACTURER_ID + 1), 0x78);
+    EXPECT_EQ(slave.readCV(CV_MANUFACTURER_ID_BANK_1), 0x56);
+    EXPECT_EQ(slave.readCV(CV_MANUFACTURER_ID_BANK_1 + 1), 0x78);
     EXPECT_EQ(slave.readCV(CV_MANUFACTURER_ID_BANK_2), 0x56);
     EXPECT_EQ(slave.readCV(CV_MANUFACTURER_ID_BANK_2 + 1), 0x78);
+
+    // Reading any version number CVs should return 0
+    EXPECT_EQ(slave.readCV(CV_VERSION_NUM), 0);
+    EXPECT_EQ(slave.readCV(CV_VERSION_NUM + 1), 0);
+    EXPECT_EQ(slave.readCV(CV_VERSION_NUM_BANK_1), 0);
+    EXPECT_EQ(slave.readCV(CV_VERSION_NUM_BANK_1 + 1), 0);
+    EXPECT_EQ(slave.readCV(CV_VERSION_NUM_BANK_2), 0);
+    EXPECT_EQ(slave.readCV(CV_VERSION_NUM_BANK_2 + 1), 0);
 }
 
 TEST_F(SUSISlaveTest, BiDiStatusResponse) {
