@@ -54,6 +54,60 @@ void SUSI_Slave::queueBidirectionalData(const uint8_t* data) {
     }
 }
 
+void SUSI_Slave::sendPositionResponse(uint16_t address) {
+    uint8_t data[4];
+    data[0] = SUSI_MSG_BIDI_POSITION_HIGH;
+    data[1] = (address >> 8) & 0xFF;
+    data[2] = SUSI_MSG_BIDI_POSITION_LOW;
+    data[3] = address & 0xFF;
+    queueBidirectionalData(data);
+}
+
+void SUSI_Slave::sendSignalState(uint8_t state) {
+    uint8_t data[4] = {SUSI_MSG_BIDI_SIGNAL_STATE, state, SUSI_MSG_BIDI_IDLE, 0};
+    queueBidirectionalData(data);
+}
+
+void SUSI_Slave::sendDirectFunction(uint8_t function, uint8_t action) {
+    uint8_t data[4] = {SUSI_MSG_BIDI_DIRECT_FUNCTION, (uint8_t)(function | action), SUSI_MSG_BIDI_IDLE, 0};
+    queueBidirectionalData(data);
+}
+
+void SUSI_Slave::sendDCCFunction(uint8_t function, uint8_t action) {
+    uint8_t data[4] = {SUSI_MSG_BIDI_FUNCTION_VALUE_DCC, (uint8_t)(function | action), SUSI_MSG_BIDI_IDLE, 0};
+    queueBidirectionalData(data);
+}
+
+void SUSI_Slave::sendShortBinaryState(uint8_t state) {
+    uint8_t data[4] = {SUSI_MSG_BIDI_SHORT_BINARY_STATES, state, SUSI_MSG_BIDI_IDLE, 0};
+    queueBidirectionalData(data);
+}
+
+void SUSI_Slave::sendAutoSpeed(uint8_t speed, bool forward) {
+    uint8_t data_byte = speed & 0x7F;
+    if (forward) {
+        data_byte |= 0x80;
+    }
+    uint8_t data[4] = {SUSI_MSG_BIDI_AUTO_SPEED, data_byte, SUSI_MSG_BIDI_IDLE, 0};
+    queueBidirectionalData(data);
+}
+
+void SUSI_Slave::sendAutoOperation(uint8_t operation) {
+    uint8_t data[4] = {SUSI_MSG_BIDI_AUTO_OPERATION, operation, SUSI_MSG_BIDI_IDLE, 0};
+    queueBidirectionalData(data);
+}
+
+void SUSI_Slave::sendAnalogValue(uint8_t channel, uint8_t value) {
+    uint8_t header = (channel < 2) ? SUSI_MSG_BIDI_ANALOG_A : SUSI_MSG_BIDI_ANALOG_B;
+    uint8_t data[4] = {header, value, SUSI_MSG_BIDI_IDLE, 0};
+    queueBidirectionalData(data);
+}
+
+void SUSI_Slave::sendError(uint8_t error) {
+    uint8_t data[4] = {SUSI_MSG_BIDI_ERROR, error, SUSI_MSG_BIDI_IDLE, 0};
+    queueBidirectionalData(data);
+}
+
 void SUSI_Slave::_send_bidi_response(uint8_t header1, uint8_t data1, uint8_t header2, uint8_t data2) {
     _hal.sendByte(header1);
     _hal.sendByte(data1);
