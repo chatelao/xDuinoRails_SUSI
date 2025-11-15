@@ -80,7 +80,7 @@ To ensure a robust and testable library, the following principles should be foll
     - [x] On receiving a CV Bank Read command, send an ACK if the bank is available.
     - [x] Transmit the 40 bytes of the requested CV bank.
     - [x] Calculate and transmit the CRC checksum.
-- [ ] **[RCN601-S5]** Implement logic to generate all relevant BiDi messages.
+- [x] **[RCN601-S5]** Implement logic to generate all relevant BiDi messages.
 
 
 ## 4. Configuration Variables (RCN-602)

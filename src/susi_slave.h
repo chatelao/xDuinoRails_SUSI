@@ -91,6 +91,65 @@ public:
     void queueBidirectionalData(const uint8_t* data);
 
     /**
+     * @brief Sends a position response in the next bidirectional poll.
+     * @param address The position address to send.
+     * @see RCN-601
+     */
+    void sendPositionResponse(uint16_t address);
+
+    /**
+     * @brief Sends a signal state response.
+     * @param state The signal state to send.
+     */
+    void sendSignalState(uint8_t state);
+
+    /**
+     * @brief Sends a direct function response.
+     * @param function The function to send.
+     * @param action The action to send.
+     */
+    void sendDirectFunction(uint8_t function, uint8_t action);
+
+    /**
+     * @brief Sends a DCC function response.
+     * @param function The DCC function to send.
+     * @param action The action to send.
+     */
+    void sendDCCFunction(uint8_t function, uint8_t action);
+
+    /**
+     * @brief Sends a short binary state response.
+     * @param state The state to send.
+     */
+    void sendShortBinaryState(uint8_t state);
+
+    /**
+     * @brief Sends an automatic speed response.
+     * @param speed The speed to send.
+     * @param forward The direction to send.
+     */
+    void sendAutoSpeed(uint8_t speed, bool forward);
+
+    /**
+     * @brief Sends an automatic operation response.
+     * @param operation The operation to send.
+     */
+    void sendAutoOperation(uint8_t operation);
+
+    /**
+     * @brief Sends an analog value response.
+     * @param channel The analog channel.
+     * @param value The analog value.
+     */
+    void sendAnalogValue(uint8_t channel, uint8_t value);
+
+    /**
+     * @brief Sends an error response.
+     * @param error The error to send.
+     */
+    void sendError(uint8_t error);
+
+    /**
      * @brief Reads the value of a CV.
      * @param cv The CV to read.
      * @return uint8_t The value of the CV.

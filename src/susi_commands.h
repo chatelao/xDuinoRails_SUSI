@@ -44,6 +44,16 @@ const uint8_t SUSI_MSG_BIDI_IDLE = 0x8A;
  * @brief The SUSI response message for a BiDi state response.
  * @see RCN-601
  */
+const uint8_t SUSI_MSG_BIDI_SIGNAL_STATE = 0x80;
+const uint8_t SUSI_MSG_BIDI_DIRECT_FUNCTION = 0x81;
+const uint8_t SUSI_MSG_BIDI_FUNCTION_VALUE_DCC = 0x82;
+const uint8_t SUSI_MSG_BIDI_SHORT_BINARY_STATES = 0x83;
+const uint8_t SUSI_MSG_BIDI_AUTO_SPEED = 0x84;
+const uint8_t SUSI_MSG_BIDI_AUTO_OPERATION = 0x85;
+const uint8_t SUSI_MSG_BIDI_POSITION_HIGH = 0x88;
+const uint8_t SUSI_MSG_BIDI_POSITION_LOW = 0x89;
+const uint8_t SUSI_MSG_BIDI_ANALOG_A = 0x8C;
+const uint8_t SUSI_MSG_BIDI_ANALOG_B = 0x8D;
 const uint8_t SUSI_MSG_BIDI_STATE_RESPONSE = 0x8B;
 
 /**
