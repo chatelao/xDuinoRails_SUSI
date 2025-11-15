@@ -30,3 +30,4 @@ This section maps the implemented test cases to the relevant chapters in the Rai
 | `EndToEndTest.TrueEndToEnd_SendAndReceiveSetSpeedPacket` | `test/e2e_tests.cpp` | RCN-600, Chapter 3.1 (Speed Control) |
 | `LegacySusiE2ETest.readCV_BiDi` | `test/test_susi_e2e.cpp` | RCN-601, Chapter 5 (BiDi Messages) |
 | `LegacySusiE2ETest.readSpecialCVs` | `test/test_susi_e2e.cpp` | RCN-602, Chapter 3 (Configuration Variables) |
+| `SUSISlaveTest.ReadSpecialCVs_Banked` | `test/unit_tests.cpp` | RCN-602, Chapter 3 (Configuration Variables) |

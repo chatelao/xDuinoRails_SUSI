@@ -95,7 +95,11 @@ const uint8_t SUSI_CMD_READ_CV_BANK_2 = 0x0E;
 // RCN-602 Specific CVs
 const uint16_t CV_SUSI_MODULE_NUM = 897;
 const uint16_t CV_MANUFACTURER_ID = 900;
+const uint16_t CV_MANUFACTURER_ID_BANK_1 = 940;
+const uint16_t CV_MANUFACTURER_ID_BANK_2 = 980;
 const uint16_t CV_VERSION_NUM = 902;
+const uint16_t CV_VERSION_NUM_BANK_1 = 942;
+const uint16_t CV_VERSION_NUM_BANK_2 = 982;
 const uint16_t CV_STATUS_BITS = 1020;
 const uint16_t CV_SUSI_CV_BANKING = 1021;
 
