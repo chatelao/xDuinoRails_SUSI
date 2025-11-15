@@ -1,88 +1,67 @@
 #include <susi_master.h>
 
+/**
+ * @file Master.ino
+ * @brief SUSI-Master (TX) Example
+ *
+ * This example demonstrates a SUSI Master, the transmitting device on the bus.
+ * It sends commands to a SUSI Slave to control its functions. In this case,
+ * it toggles function 1 on and off every two seconds.
+ *
+ * Hardware Setup:
+ * - Arduino Board (e.g., Uno, Nano)
+ * - Connect the CLOCK_PIN (here Pin 2) to the SUSI bus clock line.
+ * - Connect the DATA_PIN (here Pin 3) to the SUSI bus data line.
+ * - Ensure a common GND connection between the master and slave.
+ */
+
 // Define the pins for the SUSI bus
 const uint8_t CLOCK_PIN = 2;
 const uint8_t DATA_PIN = 3;
+
+// The address of the slave to be controlled
+const uint8_t SLAVE_ADDRESS = 1;
 
 // Create the necessary SUSI objects
 SusiHAL hal(CLOCK_PIN, DATA_PIN);
 SUSI_Master master(hal);
 SUSI_Master_API susi(master);
 
-void bidiCallback(uint8_t address, uint8_t* data) {
-  Serial.print("Received BiDi response from address ");
-  Serial.print(address);
-  Serial.print(": ");
-  for (int i = 0; i < 4; i++) {
-    Serial.print(data[i], HEX);
-    Serial.print(" ");
-  }
-  Serial.println();
-}
+// State of the function (On/Off)
+bool functionOn = false;
 
 void setup() {
   Serial.begin(9600);
-  while (!Serial);
+  while (!Serial); // Wait for the serial connection
 
+  // Initialize the SUSI Master
   susi.begin();
-  susi.onBidiResponse(bidiCallback);
 
   Serial.println("SUSI Master Example");
-
-  // Example: Perform handshake to find bidirectional slaves
-  Serial.print("Performing handshake");
-  SusiMasterResult result = susi.performHandshake();
-  printResult(result);
-}
-
-void printResult(SusiMasterResult result) {
-  if (result == SUCCESS) {
-    Serial.println(" -> SUCCESS");
-  } else if (result == TIMEOUT) {
-    Serial.println(" -> TIMEOUT");
-  } else if (result == INVALID_ACK) {
-    Serial.println(" -> INVALID_ACK");
-  } else if (result == SLAVE_ALREADY_EXISTS) {
-    Serial.println(" -> SLAVE_ALREADY_EXISTS");
-  } else if (result == SLAVE_LIST_FULL) {
-    Serial.println(" -> SLAVE_LIST_FULL");
-  }
+  Serial.println("Controls Function 1 on the Slave.");
 }
 
 void loop() {
-  SusiMasterResult result;
+  // Toggle the function state
+  functionOn = !functionOn;
 
-  // Example: Turn function 1 on for slave address 1
-  Serial.print("Turning function 1 ON");
-  result = susi.setFunction(1, 1, true);
-  printResult(result);
-  delay(2000);
-
-  // Example: Turn function 1 off for slave address 1
-  Serial.print("Turning function 1 OFF");
-  result = susi.setFunction(1, 1, false);
-  printResult(result);
-  delay(2000);
-
-  // Example: Write to CV 10 on slave address 1
-  Serial.print("Writing 123 to CV 10");
-  result = susi.writeCV(1, 10, 123);
-  printResult(result);
-  delay(2000);
-
-  // Example: Read from CV 10 on slave address 1
-  uint8_t cvValue;
-  Serial.print("Reading from CV 10");
-  result = susi.readCV(1, 10, cvValue);
-  printResult(result);
-  if (result == SUCCESS) {
-    Serial.print("  -> CV Value: ");
-    Serial.println(cvValue);
+  // Send a message about the state
+  if (functionOn) {
+    Serial.println("Turning Function 1 ON");
+  } else {
+    Serial.println("Turning Function 1 OFF");
   }
-  delay(2000);
 
-  // Example: Poll for bidirectional data
-  Serial.println("Polling for bidirectional data...");
-  susi.pollSlaves();
+  // Send the command to the slave
+  SusiMasterResult result = susi.setFunction(SLAVE_ADDRESS, 1, functionOn);
+
+  // Check the result of the transmission
+  if (result == SUCCESS) {
+    Serial.println("-> Command sent successfully.");
+  } else {
+    Serial.println("-> Error sending command.");
+  }
+
+  // Wait 2 seconds before the next transmission
   delay(2000);
 }

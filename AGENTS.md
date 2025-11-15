@@ -2,6 +2,10 @@
 
 This document provides instructions for AI agents working on this repository.
 
+## Language and Style
+
+*   **English Only:** All code, comments, user-facing documentation (including READMEs), and commit messages must be written in English.
+
 ## Documentation
 
 All code must be documented using Doxygen-style comments. Where applicable, comments should reference the specific RCN document and chapter that the code implements.
