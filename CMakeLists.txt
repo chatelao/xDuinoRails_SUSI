@@ -22,6 +22,7 @@ add_executable(run_tests
   test/unit_tests.cpp
   test/test_susi_api.cpp
   test/test_susi_e2e.cpp
+  test/test_susi_sound.cpp
 )
 
 # Link the test executable with Google Test
