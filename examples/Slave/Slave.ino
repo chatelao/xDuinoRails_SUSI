@@ -11,11 +11,27 @@ const uint8_t SLAVE_ADDRESS = 1;
 SusiHAL hal(CLOCK_PIN, DATA_PIN);
 SUSI_Slave susi(hal);
 
+void functionCallback(uint8_t function, bool on) {
+  Serial.print("Function ");
+  Serial.print(function);
+  Serial.print(" was turned ");
+  Serial.println(on ? "ON" : "OFF");
+}
+
 void setup() {
   Serial.begin(9600);
   while (!Serial);
 
   susi.begin(SLAVE_ADDRESS);
+  susi.onFunctionChange(functionCallback);
+
+  // Set the manufacturer and hardware IDs for this slave
+  susi.setManufacturerID(0x1234);
+  susi.setHardwareID(0x5678);
+  susi.setVersionNumber(0x0102);
+
+  // Enable bidirectional communication
+  susi.enableBidirectionalMode();
 
   Serial.println("SUSI Slave Example");
 }

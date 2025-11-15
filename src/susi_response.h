@@ -25,6 +25,9 @@ enum SusiMasterResult {
      * @brief The slave list is full.
      */
     SLAVE_LIST_FULL,
+    /**
+     * @brief An invalid CRC was received.
+     */
     INVALID_CRC
 };
 
