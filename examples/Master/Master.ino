@@ -9,11 +9,23 @@ SusiHAL hal(CLOCK_PIN, DATA_PIN);
 SUSI_Master master(hal);
 SUSI_Master_API susi(master);
 
+void bidiCallback(uint8_t address, uint8_t* data) {
+  Serial.print("Received BiDi response from address ");
+  Serial.print(address);
+  Serial.print(": ");
+  for (int i = 0; i < 4; i++) {
+    Serial.print(data[i], HEX);
+    Serial.print(" ");
+  }
+  Serial.println();
+}
+
 void setup() {
   Serial.begin(9600);
   while (!Serial);
 
   susi.begin();
+  susi.onBidiResponse(bidiCallback);
 
   Serial.println("SUSI Master Example");
 

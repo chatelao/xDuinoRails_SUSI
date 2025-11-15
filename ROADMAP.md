@@ -98,11 +98,11 @@ To ensure a robust and testable library, the following principles should be foll
 - [x] **[S10]** Implement the logic to handle a `Write CV` command.
 - [x] **[S11]** Implement the logic to handle a `Read CV` command.
 - [x] **[RCN602-S2]** Implement support for CV banking using CV 1021.
-- [ ] **[RCN602-S3]** Implement the specific CVs defined in RCN-602:
-    - [ ] CV 897: SUSI Module #
-    - [ ] CV 900 / 940 / 980: Manufacturer and Hardware ID
-    - [ ] CV 901 / 941 / 981: Version Numbers
-    - [ ] CV 1020: Status Bits (WAIT, SLOW, HOLD, STOP)
+- [x] **[RCN602-S3]** Implement the specific CVs defined in RCN-602:
+    - [x] CV 897: SUSI Module #
+    - [x] CV 900 / 940 / 980: Manufacturer and Hardware ID
+    - [x] CV 901 / 941 / 981: Version Numbers
+    - [x] CV 1020: Status Bits (WAIT, SLOW, HOLD, STOP)
 
 
 ## 5. Examples and Finalization
