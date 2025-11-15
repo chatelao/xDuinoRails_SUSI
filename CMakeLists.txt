@@ -16,6 +16,7 @@ file(GLOB_RECURSE LIB_SOURCES "src/*.cpp")
 add_executable(run_tests
   test/test_main.cpp
   test/mock_hal.cpp
+  test/EEPROM.cpp
   ${LIB_SOURCES}
   test/e2e_tests.cpp
   test/unit_tests.cpp
