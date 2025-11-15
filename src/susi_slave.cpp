@@ -271,16 +271,24 @@ uint8_t SUSI_Slave::readCV(uint16_t cv) {
         case CV_SUSI_MODULE_NUM:
             return _address;
         case CV_MANUFACTURER_ID:
+        case CV_MANUFACTURER_ID_BANK_1:
+        case CV_MANUFACTURER_ID_BANK_2:
             if (_cv_bank_select == 0) return (_manufacturer_id >> 8) & 0xFF;
             if (_cv_bank_select == 1) return (_hardware_id >> 8) & 0xFF;
             return 0;
         case CV_MANUFACTURER_ID + 1:
+        case CV_MANUFACTURER_ID_BANK_1 + 1:
+        case CV_MANUFACTURER_ID_BANK_2 + 1:
             if (_cv_bank_select == 0) return _manufacturer_id & 0xFF;
             if (_cv_bank_select == 1) return _hardware_id & 0xFF;
             return 0;
         case CV_VERSION_NUM:
+        case CV_VERSION_NUM_BANK_1:
+        case CV_VERSION_NUM_BANK_2:
             return (_version_number >> 8) & 0xFF;
         case CV_VERSION_NUM + 1:
+        case CV_VERSION_NUM_BANK_1 + 1:
+        case CV_VERSION_NUM_BANK_2 + 1:
             return _version_number & 0xFF;
         case CV_STATUS_BITS:
             return _status_bits;

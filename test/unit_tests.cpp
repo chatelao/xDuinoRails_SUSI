@@ -408,6 +408,35 @@ TEST_F(SUSISlaveTest, ReadSpecialCVs) {
     EXPECT_EQ(slave.readCV(CV_STATUS_BITS), 0);
 }
 
+TEST_F(SUSISlaveTest, ReadSpecialCVs_Banked) {
+    slave.setManufacturerID(0x1234);
+    slave.setHardwareID(0x5678);
+    slave.setVersionNumber(0x9ABC);
+
+    // Default bank 0
+    EXPECT_EQ(slave.readCV(CV_MANUFACTURER_ID_BANK_1), 0x12);
+    EXPECT_EQ(slave.readCV(CV_MANUFACTURER_ID_BANK_1 + 1), 0x34);
+    EXPECT_EQ(slave.readCV(CV_VERSION_NUM_BANK_1), 0x9A);
+    EXPECT_EQ(slave.readCV(CV_VERSION_NUM_BANK_1 + 1), 0xBC);
+
+    // Switch to bank 1
+    SUSI_Packet packet;
+    packet.address = SLAVE_ADDRESS;
+    packet.command = SUSI_CMD_WRITE_CV;
+    packet.data = (CV_SUSI_CV_BANKING >> 8) & 0xFF;
+    slave._test_receive_packet(packet);
+    slave.read();
+
+    packet.command = CV_SUSI_CV_BANKING & 0xFF;
+    packet.data = 1;
+    slave._test_receive_packet(packet);
+    slave.read();
+
+    // Now, reading should return the hardware ID
+    EXPECT_EQ(slave.readCV(CV_MANUFACTURER_ID_BANK_2), 0x56);
+    EXPECT_EQ(slave.readCV(CV_MANUFACTURER_ID_BANK_2 + 1), 0x78);
+}
+
 TEST_F(SUSISlaveTest, BiDiStatusResponse) {
     slave.enableBidirectionalMode();
     slave.setStatusBits(1 << STATUS_BIT_SLOW);
