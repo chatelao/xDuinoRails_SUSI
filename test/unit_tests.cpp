@@ -483,3 +483,108 @@ TEST_F(SUSISlaveTest, BiDiStatusResponse) {
     slave._test_receive_packet(poll_packet);
     slave.read();
 }
+
+#include "EEPROM.h"
+
+// --- Constants for EEPROM layout ---
+const uint8_t EEPROM_MAGIC_BYTE_TEST = 0x55;
+const int EEPROM_ADDR_MAGIC_TEST = 0;
+const int EEPROM_ADDR_CV_COUNT_TEST = 1;
+const int EEPROM_ADDR_CV_DATA_START_TEST = 2;
+
+
+// Test fixture for CV persistence tests
+class SUSISlaveCVPersistenceTest : public ::testing::Test {
+protected:
+    const uint8_t CLOCK_PIN = 2;
+    const uint8_t DATA_PIN = 3;
+    const uint8_t SLAVE_ADDRESS = 1;
+
+    MockSusiHAL hal;
+    SUSI_Slave slave;
+
+    SUSISlaveCVPersistenceTest() : slave(hal) {}
+
+    void SetUp() override {
+        mock_hal_reset();
+        _susi_slave_instance = &slave;
+
+        // "Clear" the EEPROM before each test by writing a different magic byte
+        EEPROM.write(EEPROM_ADDR_MAGIC_TEST, 0x00);
+    }
+
+    // Helper to simulate writing a CV via SUSI packets
+    void writeCV(uint16_t cv_address, uint8_t value) {
+        SUSI_Packet p;
+        p.address = SLAVE_ADDRESS;
+        p.command = SUSI_CMD_WRITE_CV;
+        p.data = (cv_address >> 8) & 0xFF; // Bank
+        slave._test_receive_packet(p);
+        slave.read();
+
+        p.command = cv_address & 0xFF; // Low bits of CV
+        p.data = value;
+        slave._test_receive_packet(p);
+        slave.read();
+    }
+};
+
+TEST_F(SUSISlaveCVPersistenceTest, BeginInitializesEmptyEEPROM) {
+    slave.begin(SLAVE_ADDRESS);
+
+    // Check that the magic byte and a CV count of 0 were written
+    EXPECT_EQ(EEPROM.read(EEPROM_ADDR_MAGIC_TEST), EEPROM_MAGIC_BYTE_TEST);
+    EXPECT_EQ(EEPROM.read(EEPROM_ADDR_CV_COUNT_TEST), 0);
+}
+
+TEST_F(SUSISlaveCVPersistenceTest, WriteNewCVUpdatesEEPROM) {
+    slave.begin(SLAVE_ADDRESS);
+    writeCV(123, 45);
+
+    // Check RAM
+    EXPECT_EQ(slave.readCV(123), 45);
+
+    // Check EEPROM
+    EXPECT_EQ(EEPROM.read(EEPROM_ADDR_CV_COUNT_TEST), 1);
+    uint16_t key;
+    EEPROM.get(EEPROM_ADDR_CV_DATA_START_TEST, key);
+    EXPECT_EQ(key, 123);
+    EXPECT_EQ(EEPROM.read(EEPROM_ADDR_CV_DATA_START_TEST + 2), 45);
+}
+
+TEST_F(SUSISlaveCVPersistenceTest, UpdateExistingCVUpdatesEEPROM) {
+    slave.begin(SLAVE_ADDRESS);
+    writeCV(123, 45); // First write
+    writeCV(123, 99); // Second write to the same CV
+
+    // Check RAM
+    EXPECT_EQ(slave.readCV(123), 99);
+
+    // Check EEPROM (count should still be 1, but value should be updated)
+    EXPECT_EQ(EEPROM.read(EEPROM_ADDR_CV_COUNT_TEST), 1);
+    uint16_t key;
+    EEPROM.get(EEPROM_ADDR_CV_DATA_START_TEST, key);
+    EXPECT_EQ(key, 123);
+    EXPECT_EQ(EEPROM.read(EEPROM_ADDR_CV_DATA_START_TEST + 2), 99);
+}
+
+
+TEST_F(SUSISlaveCVPersistenceTest, BeginLoadsDataFromEEPROM) {
+    // Manually "pre-load" the mock EEPROM with data
+    EEPROM.write(EEPROM_ADDR_MAGIC_TEST, EEPROM_MAGIC_BYTE_TEST);
+    EEPROM.write(EEPROM_ADDR_CV_COUNT_TEST, 2);
+    // CV[0]: key=10, value=20
+    EEPROM.put(EEPROM_ADDR_CV_DATA_START_TEST, (uint16_t)10);
+    EEPROM.write(EEPROM_ADDR_CV_DATA_START_TEST + 2, 20);
+    // CV[1]: key=30, value=40
+    EEPROM.put(EEPROM_ADDR_CV_DATA_START_TEST + 3, (uint16_t)30);
+    EEPROM.write(EEPROM_ADDR_CV_DATA_START_TEST + 5, 40);
+
+    // Now, call begin() to trigger the loading process
+    slave.begin(SLAVE_ADDRESS);
+
+    // Check that the data was loaded into the slave's RAM
+    EXPECT_EQ(slave.readCV(10), 20);
+    EXPECT_EQ(slave.readCV(30), 40);
+    EXPECT_EQ(slave.readCV(99), 0); // Check a non-existent CV
+}

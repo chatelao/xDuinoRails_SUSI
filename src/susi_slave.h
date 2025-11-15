@@ -219,6 +219,7 @@ private:
     uint8_t _cv_bank_select;
     uint16_t _cv_address;
     bool _cv_read_mode;
+    bool _cv_op_in_progress;
     uint16_t _cv_keys[MAX_CVS];
     uint8_t _cv_values[MAX_CVS];
     uint8_t _cv_count;

@@ -1,6 +1,26 @@
 #include "susi_slave.h"
 #include "susi_commands.h"
 #include "susi_crc.h"
+#include <EEPROM.h>
+
+// --- EEPROM Layout ---
+// This defines the structure of the data stored in the EEPROM to ensure that
+// the CVs (Configuration Variables) are persistent across device restarts.
+//
+// Address | Size | Description
+//---------|------|-----------------------------------------------------------
+// 0       | 1    | EEPROM_MAGIC_BYTE: A fixed value (0x55) to check if the
+//         |      | EEPROM has been initialized by this library.
+// 1       | 1    | CV Count: The number of CVs currently stored.
+// 2...    | 3/CV | Start of CV data. Each entry consists of:
+//         |      | - 2 bytes: CV address/key (uint16_t)
+//         |      | - 1 byte:  CV value (uint8_t)
+//----------------------------------------------------------------------------
+const uint8_t EEPROM_MAGIC_BYTE = 0x55;
+const int EEPROM_ADDR_MAGIC = 0;
+const int EEPROM_ADDR_CV_COUNT = 1;
+const int EEPROM_ADDR_CV_DATA_START = 2;
+
 
 SUSI_Slave* _susi_slave_instance = nullptr;
 
@@ -19,6 +39,7 @@ SUSI_Slave::SUSI_Slave(SusiHAL& hal) : _hal(hal) {
     _cv_count = 0;
     _cv_address = 0;
     _cv_read_mode = false;
+    _cv_op_in_progress = false;
     _bidirectional_mode = false;
     _bidi_data_available = false;
     _status_bits = 0;
@@ -34,6 +55,29 @@ SUSI_Slave::SUSI_Slave(SusiHAL& hal) : _hal(hal) {
 void SUSI_Slave::begin(uint8_t address) {
     _address = address;
     _hal.begin();
+
+    // Check if the EEPROM has been initialized with our data structure.
+    if (EEPROM.read(EEPROM_ADDR_MAGIC) == EEPROM_MAGIC_BYTE) {
+        // EEPROM is initialized, load CVs.
+        _cv_count = EEPROM.read(EEPROM_ADDR_CV_COUNT);
+        if (_cv_count > MAX_CVS) {
+            _cv_count = 0; // Data corruption, reset CVs.
+        }
+
+        int address = EEPROM_ADDR_CV_DATA_START;
+        for (int i = 0; i < _cv_count; i++) {
+            EEPROM.get(address, _cv_keys[i]);
+            address += sizeof(uint16_t);
+            _cv_values[i] = EEPROM.read(address);
+            address += sizeof(uint8_t);
+        }
+    } else {
+        // EEPROM is not initialized. Write the magic byte and set CV count to 0.
+        EEPROM.write(EEPROM_ADDR_MAGIC, EEPROM_MAGIC_BYTE);
+        EEPROM.write(EEPROM_ADDR_CV_COUNT, 0);
+        _cv_count = 0;
+    }
+
     attachInterrupt(digitalPinToInterrupt(_hal.get_clock_pin()), onClockFall, FALLING);
 }
 
@@ -194,11 +238,13 @@ SUSI_Packet SUSI_Slave::read() {
             case SUSI_CMD_WRITE_CV:
                 _cv_bank = packet.data;
                 _cv_read_mode = false;
+                _cv_op_in_progress = true;
                 _hal.sendAck();
                 break;
             case SUSI_CMD_READ_CV:
                 _cv_bank = packet.data;
                 _cv_read_mode = true;
+                _cv_op_in_progress = true;
                 _hal.sendAck();
                 break;
             case SUSI_CMD_BIDI_HOST_CALL:
@@ -235,7 +281,7 @@ SUSI_Packet SUSI_Slave::read() {
                 }
                 break;
             default:
-                if (_cv_bank != 0) {
+                if (_cv_op_in_progress) {
                     _cv_address = ((_cv_bank) << 8) | packet.command;
                     if (_cv_read_mode) {
                         uint8_t value1 = readCV(_cv_address);
@@ -245,20 +291,36 @@ SUSI_Packet SUSI_Slave::read() {
                         if (_cv_address == CV_SUSI_CV_BANKING) {
                             _cv_bank_select = packet.data;
                         } else {
+                            // --- Update existing CV or add a new one ---
+                            bool found = false;
                             for (int i = 0; i < _cv_count; i++) {
                                 if (_cv_keys[i] == _cv_address) {
+                                    // Found the CV, update its value in RAM and EEPROM.
                                     _cv_values[i] = packet.data;
-                                    _cv_bank = 0;
-                                    return packet;
+                                    int value_address = EEPROM_ADDR_CV_DATA_START + i * (sizeof(uint16_t) + sizeof(uint8_t)) + sizeof(uint16_t);
+                                    EEPROM.write(value_address, packet.data);
+                                    found = true;
+                                    break;
                                 }
                             }
-                            if (_cv_count < MAX_CVS) {
+
+                            if (!found && _cv_count < MAX_CVS) {
+                                // CV not found, add it as a new entry if there's space.
                                 _cv_keys[_cv_count] = _cv_address;
                                 _cv_values[_cv_count] = packet.data;
+
+                                // Write the new CV key-value pair to the EEPROM.
+                                int entry_address = EEPROM_ADDR_CV_DATA_START + _cv_count * (sizeof(uint16_t) + sizeof(uint8_t));
+                                EEPROM.put(entry_address, _cv_address);
+                                EEPROM.write(entry_address + sizeof(uint16_t), packet.data);
+
+                                // Increment the CV count in RAM and update it in the EEPROM.
                                 _cv_count++;
+                                EEPROM.write(EEPROM_ADDR_CV_COUNT, _cv_count);
                             }
                         }
                     }
+                    _cv_op_in_progress = false;
                     _cv_bank = 0;
                 }
         }

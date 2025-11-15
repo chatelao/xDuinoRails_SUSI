@@ -92,9 +92,7 @@ To ensure a robust and testable library, the following principles should be foll
 
 ### Slave (Module) Role
 
-- [x] **[S9]** Implement a mechanism to store and retrieve CV values.
-  - > [!NOTE]
-  - > The current implementation uses a transient in-memory store. A future task is to add EEPROM support for persistent storage.
+- [x] **[S9]** Implement a mechanism to store and retrieve CV values, with persistence via EEPROM.
 - [x] **[S10]** Implement the logic to handle a `Write CV` command.
 - [x] **[S11]** Implement the logic to handle a `Read CV` command.
 - [x] **[RCN602-S2]** Implement support for CV banking using CV 1021.
