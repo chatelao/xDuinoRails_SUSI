@@ -35,13 +35,20 @@ const uint8_t SUSI_CMD_READ_CV = 0x03;
 const uint8_t SUSI_CMD_BIDI_HOST_CALL = 0x01;
 
 /**
- * @brief The SUSI response message for a BiDi idle state.
+ * @brief The SUSI response message for a BiDi empty command (Idle/No Data).
+ * @details Corresponds to "Funktion direkt" with data 0 (Leerbefehl).
  * @see RCN-601
  */
-const uint8_t SUSI_MSG_BIDI_IDLE = 0x8A;
+const uint8_t SUSI_MSG_BIDI_EMPTY = 0x81;
 
 /**
- * @brief The SUSI response message for a BiDi state response.
+ * @brief The SUSI response message for a BiDi status response.
+ * @see RCN-601
+ */
+const uint8_t SUSI_MSG_BIDI_STATUS = 0x8A;
+
+/**
+ * @brief The SUSI response message for a BiDi signal state.
  * @see RCN-601
  */
 const uint8_t SUSI_MSG_BIDI_SIGNAL_STATE = 0x80;
@@ -54,13 +61,12 @@ const uint8_t SUSI_MSG_BIDI_POSITION_HIGH = 0x88;
 const uint8_t SUSI_MSG_BIDI_POSITION_LOW = 0x89;
 const uint8_t SUSI_MSG_BIDI_ANALOG_A = 0x8C;
 const uint8_t SUSI_MSG_BIDI_ANALOG_B = 0x8D;
-const uint8_t SUSI_MSG_BIDI_STATE_RESPONSE = 0x8B;
 
 /**
- * @brief The SUSI response message for a BiDi CV response.
+ * @brief The SUSI response message for a BiDi CV response (Valid).
  * @see RCN-601
  */
-const uint8_t SUSI_MSG_BIDI_CV_RESPONSE = 0x8D;
+const uint8_t SUSI_MSG_BIDI_CV_RESPONSE = 0x8F;
 
 /**
  * @brief The SUSI response message for a BiDi error.
