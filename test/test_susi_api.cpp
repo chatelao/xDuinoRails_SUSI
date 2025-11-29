@@ -105,7 +105,7 @@ TEST(SUSI_Master_API, performHandshake) {
     };
 
     // Simulate a successful handshake response for slave 1
-    uint8_t response[] = {SUSI_MSG_BIDI_IDLE, 0x00, SUSI_MSG_BIDI_IDLE, 0x00};
+    uint8_t response[] = {SUSI_MSG_BIDI_STATUS, 0x00, SUSI_MSG_BIDI_STATUS, 0x00};
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 8; j++) {
             hal.read_bits.push((response[i] >> j) & 0x01);

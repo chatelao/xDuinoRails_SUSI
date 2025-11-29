@@ -194,7 +194,7 @@ TEST_F(SUSIMasterAPITest, PerformHandshake) {
 
     mock_hal.ack_result = SUCCESS;
     // We need to push the bits for the 4-byte response
-    uint8_t response[] = {SUSI_MSG_BIDI_IDLE, 0x00, SUSI_MSG_BIDI_IDLE, 0x00};
+    uint8_t response[] = {SUSI_MSG_BIDI_STATUS, 0x00, SUSI_MSG_BIDI_STATUS, 0x00};
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 8; j++) {
             mock_hal.read_bits.push((response[i] >> j) & 0x01);
@@ -469,7 +469,7 @@ TEST_F(SUSISlaveTest, BiDiStatusResponse) {
     hal.onSendByte = [&](uint8_t byte) {
         static int byte_count = 0;
         if (byte_count == 0) {
-            EXPECT_EQ(byte, SUSI_MSG_BIDI_STATE_RESPONSE);
+            EXPECT_EQ(byte, SUSI_MSG_BIDI_STATUS);
         } else if (byte_count == 1) {
             EXPECT_EQ(byte, 1 << STATUS_BIT_SLOW);
         }

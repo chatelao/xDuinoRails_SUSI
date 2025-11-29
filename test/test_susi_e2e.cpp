@@ -150,7 +150,7 @@ TEST_F(LegacySusiE2ETest, Handshake) {
 
     EXPECT_TRUE(_callback_fired_e2e);
     EXPECT_EQ(_callback_address_e2e, SLAVE_ADDRESS);
-    EXPECT_EQ(_callback_data_e2e[0], SUSI_MSG_BIDI_IDLE);
+    EXPECT_EQ(_callback_data_e2e[0], SUSI_MSG_BIDI_EMPTY);
 }
 
 TEST_F(LegacySusiE2ETest, Poll) {
@@ -404,7 +404,7 @@ TEST_F(LegacySusiE2ETest, PollSignalState) {
     slave.sendSignalState(state);
 
     // The mock HAL needs to know what the slave will send back.
-    uint8_t response_data[] = {SUSI_MSG_BIDI_SIGNAL_STATE, state, SUSI_MSG_BIDI_IDLE, 0};
+    uint8_t response_data[] = {SUSI_MSG_BIDI_SIGNAL_STATE, state, SUSI_MSG_BIDI_EMPTY, 0};
     runPollTest(response_data);
 
     // Assertions
@@ -412,7 +412,7 @@ TEST_F(LegacySusiE2ETest, PollSignalState) {
     EXPECT_EQ(_callback_address_e2e, SLAVE_ADDRESS);
     EXPECT_EQ(_callback_data_e2e[0], SUSI_MSG_BIDI_SIGNAL_STATE);
     EXPECT_EQ(_callback_data_e2e[1], state);
-    EXPECT_EQ(_callback_data_e2e[2], SUSI_MSG_BIDI_IDLE);
+    EXPECT_EQ(_callback_data_e2e[2], SUSI_MSG_BIDI_EMPTY);
     EXPECT_EQ(_callback_data_e2e[3], 0);
 }
 
@@ -420,13 +420,13 @@ TEST_F(LegacySusiE2ETest, PollDirectFunction) {
     uint8_t function = 1; // Pfeife/Hupe
     uint8_t action = 32; // Einschalten
     slave.sendDirectFunction(function, action);
-    uint8_t response_data[] = {SUSI_MSG_BIDI_DIRECT_FUNCTION, (uint8_t)(function | action), SUSI_MSG_BIDI_IDLE, 0};
+    uint8_t response_data[] = {SUSI_MSG_BIDI_DIRECT_FUNCTION, (uint8_t)(function | action), SUSI_MSG_BIDI_EMPTY, 0};
     runPollTest(response_data);
     EXPECT_TRUE(_callback_fired_e2e);
     EXPECT_EQ(_callback_address_e2e, SLAVE_ADDRESS);
     EXPECT_EQ(_callback_data_e2e[0], SUSI_MSG_BIDI_DIRECT_FUNCTION);
     EXPECT_EQ(_callback_data_e2e[1], (function | action));
-    EXPECT_EQ(_callback_data_e2e[2], SUSI_MSG_BIDI_IDLE);
+    EXPECT_EQ(_callback_data_e2e[2], SUSI_MSG_BIDI_EMPTY);
     EXPECT_EQ(_callback_data_e2e[3], 0);
 }
 
@@ -434,26 +434,26 @@ TEST_F(LegacySusiE2ETest, PollDCCFunction) {
     uint8_t function = 5; // DCC Function 5
     uint8_t action = 64; // Ausschalten
     slave.sendDCCFunction(function, action);
-    uint8_t response_data[] = {SUSI_MSG_BIDI_FUNCTION_VALUE_DCC, (uint8_t)(function | action), SUSI_MSG_BIDI_IDLE, 0};
+    uint8_t response_data[] = {SUSI_MSG_BIDI_FUNCTION_VALUE_DCC, (uint8_t)(function | action), SUSI_MSG_BIDI_EMPTY, 0};
     runPollTest(response_data);
     EXPECT_TRUE(_callback_fired_e2e);
     EXPECT_EQ(_callback_address_e2e, SLAVE_ADDRESS);
     EXPECT_EQ(_callback_data_e2e[0], SUSI_MSG_BIDI_FUNCTION_VALUE_DCC);
     EXPECT_EQ(_callback_data_e2e[1], (function | action));
-    EXPECT_EQ(_callback_data_e2e[2], SUSI_MSG_BIDI_IDLE);
+    EXPECT_EQ(_callback_data_e2e[2], SUSI_MSG_BIDI_EMPTY);
     EXPECT_EQ(_callback_data_e2e[3], 0);
 }
 
 TEST_F(LegacySusiE2ETest, PollShortBinaryState) {
     uint8_t state = 0xAB;
     slave.sendShortBinaryState(state);
-    uint8_t response_data[] = {SUSI_MSG_BIDI_SHORT_BINARY_STATES, state, SUSI_MSG_BIDI_IDLE, 0};
+    uint8_t response_data[] = {SUSI_MSG_BIDI_SHORT_BINARY_STATES, state, SUSI_MSG_BIDI_EMPTY, 0};
     runPollTest(response_data);
     EXPECT_TRUE(_callback_fired_e2e);
     EXPECT_EQ(_callback_address_e2e, SLAVE_ADDRESS);
     EXPECT_EQ(_callback_data_e2e[0], SUSI_MSG_BIDI_SHORT_BINARY_STATES);
     EXPECT_EQ(_callback_data_e2e[1], state);
-    EXPECT_EQ(_callback_data_e2e[2], SUSI_MSG_BIDI_IDLE);
+    EXPECT_EQ(_callback_data_e2e[2], SUSI_MSG_BIDI_EMPTY);
     EXPECT_EQ(_callback_data_e2e[3], 0);
 }
 
@@ -465,26 +465,26 @@ TEST_F(LegacySusiE2ETest, PollAutoSpeed) {
     if (forward) {
         data_byte |= 0x80;
     }
-    uint8_t response_data[] = {SUSI_MSG_BIDI_AUTO_SPEED, data_byte, SUSI_MSG_BIDI_IDLE, 0};
+    uint8_t response_data[] = {SUSI_MSG_BIDI_AUTO_SPEED, data_byte, SUSI_MSG_BIDI_EMPTY, 0};
     runPollTest(response_data);
     EXPECT_TRUE(_callback_fired_e2e);
     EXPECT_EQ(_callback_address_e2e, SLAVE_ADDRESS);
     EXPECT_EQ(_callback_data_e2e[0], SUSI_MSG_BIDI_AUTO_SPEED);
     EXPECT_EQ(_callback_data_e2e[1], data_byte);
-    EXPECT_EQ(_callback_data_e2e[2], SUSI_MSG_BIDI_IDLE);
+    EXPECT_EQ(_callback_data_e2e[2], SUSI_MSG_BIDI_EMPTY);
     EXPECT_EQ(_callback_data_e2e[3], 0);
 }
 
 TEST_F(LegacySusiE2ETest, PollAutoOperation) {
     uint8_t operation = 4; // Vorwärtsfahrt (Pendelfahrt)
     slave.sendAutoOperation(operation);
-    uint8_t response_data[] = {SUSI_MSG_BIDI_AUTO_OPERATION, operation, SUSI_MSG_BIDI_IDLE, 0};
+    uint8_t response_data[] = {SUSI_MSG_BIDI_AUTO_OPERATION, operation, SUSI_MSG_BIDI_EMPTY, 0};
     runPollTest(response_data);
     EXPECT_TRUE(_callback_fired_e2e);
     EXPECT_EQ(_callback_address_e2e, SLAVE_ADDRESS);
     EXPECT_EQ(_callback_data_e2e[0], SUSI_MSG_BIDI_AUTO_OPERATION);
     EXPECT_EQ(_callback_data_e2e[1], operation);
-    EXPECT_EQ(_callback_data_e2e[2], SUSI_MSG_BIDI_IDLE);
+    EXPECT_EQ(_callback_data_e2e[2], SUSI_MSG_BIDI_EMPTY);
     EXPECT_EQ(_callback_data_e2e[3], 0);
 }
 
@@ -493,25 +493,25 @@ TEST_F(LegacySusiE2ETest, PollAnalogValue) {
     uint8_t value = 0xFE;
     slave.sendAnalogValue(channel, value);
     uint8_t header = SUSI_MSG_BIDI_ANALOG_A;
-    uint8_t response_data[] = {header, value, SUSI_MSG_BIDI_IDLE, 0};
+    uint8_t response_data[] = {header, value, SUSI_MSG_BIDI_EMPTY, 0};
     runPollTest(response_data);
     EXPECT_TRUE(_callback_fired_e2e);
     EXPECT_EQ(_callback_address_e2e, SLAVE_ADDRESS);
     EXPECT_EQ(_callback_data_e2e[0], header);
     EXPECT_EQ(_callback_data_e2e[1], value);
-    EXPECT_EQ(_callback_data_e2e[2], SUSI_MSG_BIDI_IDLE);
+    EXPECT_EQ(_callback_data_e2e[2], SUSI_MSG_BIDI_EMPTY);
     EXPECT_EQ(_callback_data_e2e[3], 0);
 }
 
 TEST_F(LegacySusiE2ETest, PollError) {
     uint8_t error = 0x01; // CV nicht unterstützt
     slave.sendError(error);
-    uint8_t response_data[] = {SUSI_MSG_BIDI_ERROR, error, SUSI_MSG_BIDI_IDLE, 0};
+    uint8_t response_data[] = {SUSI_MSG_BIDI_ERROR, error, SUSI_MSG_BIDI_EMPTY, 0};
     runPollTest(response_data);
     EXPECT_TRUE(_callback_fired_e2e);
     EXPECT_EQ(_callback_address_e2e, SLAVE_ADDRESS);
     EXPECT_EQ(_callback_data_e2e[0], SUSI_MSG_BIDI_ERROR);
     EXPECT_EQ(_callback_data_e2e[1], error);
-    EXPECT_EQ(_callback_data_e2e[2], SUSI_MSG_BIDI_IDLE);
+    EXPECT_EQ(_callback_data_e2e[2], SUSI_MSG_BIDI_EMPTY);
     EXPECT_EQ(_callback_data_e2e[3], 0);
 }
