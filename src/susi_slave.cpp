@@ -108,22 +108,22 @@ void SUSI_Slave::sendPositionResponse(uint16_t address) {
 }
 
 void SUSI_Slave::sendSignalState(uint8_t state) {
-    uint8_t data[4] = {SUSI_MSG_BIDI_SIGNAL_STATE, state, SUSI_MSG_BIDI_IDLE, 0};
+    uint8_t data[4] = {SUSI_MSG_BIDI_SIGNAL_STATE, state, SUSI_MSG_BIDI_EMPTY, 0};
     queueBidirectionalData(data);
 }
 
 void SUSI_Slave::sendDirectFunction(uint8_t function, uint8_t action) {
-    uint8_t data[4] = {SUSI_MSG_BIDI_DIRECT_FUNCTION, (uint8_t)(function | action), SUSI_MSG_BIDI_IDLE, 0};
+    uint8_t data[4] = {SUSI_MSG_BIDI_DIRECT_FUNCTION, (uint8_t)(function | action), SUSI_MSG_BIDI_EMPTY, 0};
     queueBidirectionalData(data);
 }
 
 void SUSI_Slave::sendDCCFunction(uint8_t function, uint8_t action) {
-    uint8_t data[4] = {SUSI_MSG_BIDI_FUNCTION_VALUE_DCC, (uint8_t)(function | action), SUSI_MSG_BIDI_IDLE, 0};
+    uint8_t data[4] = {SUSI_MSG_BIDI_FUNCTION_VALUE_DCC, (uint8_t)(function | action), SUSI_MSG_BIDI_EMPTY, 0};
     queueBidirectionalData(data);
 }
 
 void SUSI_Slave::sendShortBinaryState(uint8_t state) {
-    uint8_t data[4] = {SUSI_MSG_BIDI_SHORT_BINARY_STATES, state, SUSI_MSG_BIDI_IDLE, 0};
+    uint8_t data[4] = {SUSI_MSG_BIDI_SHORT_BINARY_STATES, state, SUSI_MSG_BIDI_EMPTY, 0};
     queueBidirectionalData(data);
 }
 
@@ -132,23 +132,23 @@ void SUSI_Slave::sendAutoSpeed(uint8_t speed, bool forward) {
     if (forward) {
         data_byte |= 0x80;
     }
-    uint8_t data[4] = {SUSI_MSG_BIDI_AUTO_SPEED, data_byte, SUSI_MSG_BIDI_IDLE, 0};
+    uint8_t data[4] = {SUSI_MSG_BIDI_AUTO_SPEED, data_byte, SUSI_MSG_BIDI_EMPTY, 0};
     queueBidirectionalData(data);
 }
 
 void SUSI_Slave::sendAutoOperation(uint8_t operation) {
-    uint8_t data[4] = {SUSI_MSG_BIDI_AUTO_OPERATION, operation, SUSI_MSG_BIDI_IDLE, 0};
+    uint8_t data[4] = {SUSI_MSG_BIDI_AUTO_OPERATION, operation, SUSI_MSG_BIDI_EMPTY, 0};
     queueBidirectionalData(data);
 }
 
 void SUSI_Slave::sendAnalogValue(uint8_t channel, uint8_t value) {
     uint8_t header = (channel < 2) ? SUSI_MSG_BIDI_ANALOG_A : SUSI_MSG_BIDI_ANALOG_B;
-    uint8_t data[4] = {header, value, SUSI_MSG_BIDI_IDLE, 0};
+    uint8_t data[4] = {header, value, SUSI_MSG_BIDI_EMPTY, 0};
     queueBidirectionalData(data);
 }
 
 void SUSI_Slave::sendError(uint8_t error) {
-    uint8_t data[4] = {SUSI_MSG_BIDI_ERROR, error, SUSI_MSG_BIDI_IDLE, 0};
+    uint8_t data[4] = {SUSI_MSG_BIDI_ERROR, error, SUSI_MSG_BIDI_EMPTY, 0};
     queueBidirectionalData(data);
 }
 
@@ -255,8 +255,8 @@ SUSI_Packet SUSI_Slave::read() {
                     if (forced_response && module_number == _address) {
                         _bidirectional_mode = true; // Enable BiDi on handshake
                         _hal.sendAck();
-                        // Respond with two IDLE messages as per RCN-601
-                        _send_bidi_response(SUSI_MSG_BIDI_IDLE, 0, SUSI_MSG_BIDI_IDLE, 0);
+                        // Respond with status messages as per RCN-601
+                        _send_bidi_response(SUSI_MSG_BIDI_STATUS, 0, SUSI_MSG_BIDI_STATUS, 0);
                     } else if (_bidirectional_mode && module_number == _address) {
                         // This is a regular poll, not a handshake
                         _hal.sendAck();
@@ -270,12 +270,12 @@ SUSI_Packet SUSI_Slave::read() {
                             );
                             _bidi_data_available = false; // Reset after sending
                         } else if (_status_bits != 0) {
-                            _send_bidi_response(SUSI_MSG_BIDI_STATE_RESPONSE, _status_bits, SUSI_MSG_BIDI_STATE_RESPONSE, _status_bits);
+                            _send_bidi_response(SUSI_MSG_BIDI_STATUS, _status_bits, SUSI_MSG_BIDI_STATUS, _status_bits);
                             _status_bits = 0; // Reset after sending
                         }
                         else {
-                            // Send IDLE message if no data is queued
-                            _send_bidi_response(SUSI_MSG_BIDI_IDLE, 0, SUSI_MSG_BIDI_IDLE, 0);
+                            // Send EMPTY message if no data is queued
+                            _send_bidi_response(SUSI_MSG_BIDI_EMPTY, 0, SUSI_MSG_BIDI_EMPTY, 0);
                         }
                     }
                 }

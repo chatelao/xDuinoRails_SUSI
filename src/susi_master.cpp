@@ -215,8 +215,8 @@ SusiMasterResult SUSI_Master_API::performHandshake() {
                 response[j] = _master.readByteAfterRequest();
             }
 
-            // A valid handshake response is two IDLE messages.
-            if (response[0] == SUSI_MSG_BIDI_IDLE && response[2] == SUSI_MSG_BIDI_IDLE) {
+            // A valid handshake response is two STATUS messages (usually 0x8A, 0x00).
+            if (response[0] == SUSI_MSG_BIDI_STATUS && response[2] == SUSI_MSG_BIDI_STATUS) {
                 _add_bidi_slave(i);
             }
         }
