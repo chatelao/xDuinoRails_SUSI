@@ -40,6 +40,7 @@ To ensure a robust and testable library, the following principles should be foll
 
 - [x] **[S1]** Define a HAL for the slave's clock and data pins.
 - [x] **[S2]** Implement an interrupt-driven routine to detect the falling edge of the SUSI clock.
+    - [ ] **[FIX]** Initialize the global `_susi_slave_instance` pointer (currently nullptr) to ensure the ISR works on real hardware.
 - [x] **[S3]** Inside the interrupt, read the data bit from the data line.
 - [x] **[S4]** Assemble the incoming bits into a complete SUSI packet in a buffer.
 - [x] **[S5]** Validate the received packet (e.g., start/stop bits).
@@ -75,12 +76,16 @@ To ensure a robust and testable library, the following principles should be foll
 - [x] **[RCN601-S1]** Implement the BiDi handshake response to register with the Host.
 - [x] **[RCN601-S2]** Upon receiving a BiDi call, send an ACK within 2ms if data is available to transmit.
 - [x] **[S13]** Create a function to generate a response packet for bidirectional communication.
+    - [ ] **[FIX]** Fix `sendAnalogValue` channel mapping (currently maps Ch 2 to Ch 1 slot) and implement support for packing two values.
 - [x] **[RCN601-S3]** After sending an ACK, place the 4-byte BiDi message on the data line, synchronized with the Host's 32 clock pulses.
 - [x] **[RCN601-S4]** Implement the CV Bank Reading response:
     - [x] On receiving a CV Bank Read command, send an ACK if the bank is available.
     - [x] Transmit the 40 bytes of the requested CV bank.
     - [x] Calculate and transmit the CRC checksum.
 - [x] **[RCN601-S5]** Implement logic to generate all relevant BiDi messages.
+    - [ ] **[MISSING]** Implement full support for Status Bytes 0-3 and Bit 3 addressing (currently single byte mixed with CV 1020).
+    - [ ] **[MISSING]** Implement BiDi Command 0x0F (Read CV > 769).
+    - [ ] **[MISSING]** Implement BiDi Command 0x87 (Test Function).
 
 
 ## 4. Configuration Variables (RCN-602)
@@ -94,7 +99,9 @@ To ensure a robust and testable library, the following principles should be foll
 
 - [x] **[S9]** Implement a mechanism to store and retrieve CV values, with persistence via EEPROM.
 - [x] **[S10]** Implement the logic to handle a `Write CV` command.
+    - [ ] **[FIX]** Send ACK for the second packet (Value) of the command sequence to prevent Master timeout.
 - [x] **[S11]** Implement the logic to handle a `Read CV` command.
+    - [ ] **[FIX]** Send ACK for the second packet (Low Byte) of the command sequence.
 - [x] **[RCN602-S2]** Implement support for CV banking using CV 1021.
 - [x] **[RCN602-S3]** Implement the specific CVs defined in RCN-602:
     - [x] CV 897: SUSI Module #
