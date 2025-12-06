@@ -54,6 +54,7 @@ SUSI_Slave::SUSI_Slave(SusiHAL& hal) : _hal(hal) {
 
 void SUSI_Slave::begin(uint8_t address) {
     _address = address;
+    _susi_slave_instance = this;
     _hal.begin();
 
     // Check if the EEPROM has been initialized with our data structure.
