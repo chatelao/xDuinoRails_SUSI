@@ -290,7 +290,6 @@ protected:
 
     void SetUp() override {
         mock_hal_reset();
-        _susi_slave_instance = &slave;
         slave.begin(SLAVE_ADDRESS);
         digitalWrite(CLOCK_PIN, HIGH); // Set initial clock state
     }
@@ -507,7 +506,6 @@ protected:
 
     void SetUp() override {
         mock_hal_reset();
-        _susi_slave_instance = &slave;
 
         // "Clear" the EEPROM before each test by writing a different magic byte
         EEPROM.write(EEPROM_ADDR_MAGIC_TEST, 0x00);
@@ -587,4 +585,54 @@ TEST_F(SUSISlaveCVPersistenceTest, BeginLoadsDataFromEEPROM) {
     EXPECT_EQ(slave.readCV(10), 20);
     EXPECT_EQ(slave.readCV(30), 40);
     EXPECT_EQ(slave.readCV(99), 0); // Check a non-existent CV
+}
+
+// --- Test Fixture for ISR Initialization Bug ---
+
+class SpyingMockSusiHAL : public MockSusiHAL {
+public:
+    int read_data_calls = 0;
+    bool read_data() override {
+        read_data_calls++;
+        return false;
+    }
+};
+
+class SUSISlaveISRTest : public ::testing::Test {
+protected:
+    SpyingMockSusiHAL hal;
+    SUSI_Slave slave;
+
+    SUSISlaveISRTest() : slave(hal) {}
+
+    void SetUp() override {
+        mock_hal_reset();
+        // Explicitly clear the global instance to simulate startup state
+        _susi_slave_instance = nullptr;
+    }
+
+    void TearDown() override {
+        _susi_slave_instance = nullptr;
+    }
+};
+
+TEST_F(SUSISlaveISRTest, BeginInitializesGlobalInstance) {
+    // Before begin, it should be null
+    EXPECT_EQ(_susi_slave_instance, nullptr);
+
+    slave.begin(1);
+
+    // Check if ISR is registered on the clock pin (0 in MockSusiHAL)
+    uint8_t clock_pin = hal.get_clock_pin();
+    if (isr_map.count(clock_pin)) {
+        // Call the ISR manually
+        isr_map[clock_pin]();
+    } else {
+        FAIL() << "ISR not registered on clock pin " << (int)clock_pin;
+    }
+
+    // With the bug, _susi_slave_instance is null, so handleClockFall() is not called.
+    // So read_data() is not called.
+    // With the fix, it should be called.
+    EXPECT_GT(hal.read_data_calls, 0) << "ISR did not call read_data(), indicating _susi_slave_instance might be null";
 }

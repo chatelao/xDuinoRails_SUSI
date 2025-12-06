@@ -40,7 +40,7 @@ To ensure a robust and testable library, the following principles should be foll
 
 - [x] **[S1]** Define a HAL for the slave's clock and data pins.
 - [x] **[S2]** Implement an interrupt-driven routine to detect the falling edge of the SUSI clock.
-    - [ ] **[FIX]** Initialize the global `_susi_slave_instance` pointer (currently nullptr) to ensure the ISR works on real hardware.
+    - [x] Initialize the global `_susi_slave_instance` pointer to ensure the ISR works on real hardware.
 - [x] **[S3]** Inside the interrupt, read the data bit from the data line.
 - [x] **[S4]** Assemble the incoming bits into a complete SUSI packet in a buffer.
 - [x] **[S5]** Validate the received packet (e.g., start/stop bits).
